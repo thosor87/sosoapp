@@ -201,6 +201,28 @@ export function GeomanControls({
       },
     })
 
+    // Attach pm:edit listener to a layer (fires on vertex/resize changes)
+    const attachLayerEditListener = (layer: L.Layer) => {
+      layer.on('pm:edit', () => {
+        const feature = layerToFeature(
+          layer,
+          categoryRef.current,
+          colorRef.current
+        )
+        if (feature) {
+          onShapeEdited(feature)
+        }
+      })
+    }
+
+    // Attach edit listeners to all existing layers already on the map
+    map.eachLayer((layer) => {
+      const anyLayer = layer as unknown as Record<string, unknown>
+      if (anyLayer._persistentId) {
+        attachLayerEditListener(layer)
+      }
+    })
+
     // Listen for shape creation
     const handleCreate = (e: { layer: L.Layer }) => {
       const feature = layerToFeature(
@@ -210,18 +232,7 @@ export function GeomanControls({
       )
       if (feature) {
         onShapeCreated(feature)
-      }
-    }
-
-    // Listen for shape edits (geometry changes via drag/vertex edit)
-    const handleEdit = (e: { layer: L.Layer }) => {
-      const feature = layerToFeature(
-        e.layer,
-        categoryRef.current,
-        colorRef.current
-      )
-      if (feature) {
-        onShapeEdited(feature)
+        attachLayerEditListener(e.layer)
       }
     }
 
@@ -234,7 +245,7 @@ export function GeomanControls({
       onShapeDeleted(id)
     }
 
-    // Listen for drag and rotate end (these don't fire pm:edit)
+    // Listen for drag and rotate end (these don't fire layer pm:edit)
     const handleDragEnd = (e: { layer: L.Layer }) => {
       const feature = layerToFeature(
         e.layer,
@@ -247,14 +258,12 @@ export function GeomanControls({
     }
 
     map.on('pm:create', handleCreate)
-    map.on('pm:edit', handleEdit)
     map.on('pm:remove', handleRemove)
     map.on('pm:dragend', handleDragEnd)
     map.on('pm:rotateend', handleDragEnd)
 
     return () => {
       map.off('pm:create', handleCreate)
-      map.off('pm:edit', handleEdit)
       map.off('pm:remove', handleRemove)
       map.off('pm:dragend', handleDragEnd)
       map.off('pm:rotateend', handleDragEnd)
