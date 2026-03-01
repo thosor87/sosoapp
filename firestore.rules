@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /registrations/{regId} {
+      allow read: if true;
+      allow create: if request.resource.data.eventId is string
+                    && request.resource.data.familyName is string
+                    && request.resource.data.adultsCount is number;
+      allow update: if true;
+      allow delete: if true;
+    }
+    match /timeline/{itemId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /maps/{mapId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

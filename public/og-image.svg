@@ -1,0 +1,19 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFBF5" />
+      <stop offset="100%" style="stop-color:#FFF7ED" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F97316" />
+      <stop offset="100%" style="stop-color:#F59E0B" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect x="0" y="590" width="1200" height="40" fill="url(#accent)" opacity="0.8" />
+  <text x="600" y="220" text-anchor="middle" font-family="serif" font-size="120" fill="#F97316">&#9728;&#65039;</text>
+  <text x="600" y="340" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="64" fill="#44403C">Sorings Sommerfest</text>
+  <text x="600" y="400" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="42" fill="#F97316">2026</text>
+  <text x="600" y="470" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#78716C">Anmeldung, Infos &amp; Planung</text>
+  <text x="600" y="620" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#FFFFFF">party.soring.de</text>
+</svg>
