@@ -110,5 +110,7 @@ export interface GeoJSONFeature {
     strokeColor: string
     strokeWidth: number
     opacity: number
+    radius?: number
+    shapeType?: string
   }
 }

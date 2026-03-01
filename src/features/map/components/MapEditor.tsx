@@ -175,8 +175,10 @@ export function MapEditor() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [mapName, setMapName] = useState('')
+  const [shapeRenderKey, setShapeRenderKey] = useState(0)
 
   const mapRef = useRef<L.Map | null>(null)
+  const pendingRerenderRef = useRef(false)
 
   // Subscribe to map data
   useEffect(() => {
@@ -185,11 +187,17 @@ export function MapEditor() {
     return () => unsubscribe()
   }, [eventId, subscribeToMap])
 
-  // Sync shapes from Firestore on initial load
+  // Sync shapes from Firestore on initial load and after backup restore
   useEffect(() => {
     if (mapData) {
       setShapes(mapData.shapes || [])
       setMapName(mapData.name || '')
+      // After backup restore, clear map layers and re-render saved shapes
+      if (pendingRerenderRef.current) {
+        pendingRerenderRef.current = false
+        clearMapLayers()
+        setShapeRenderKey((k) => k + 1)
+      }
     }
   }, [mapData])
 
@@ -287,6 +295,20 @@ export function MapEditor() {
     setSearchQuery(result.display_name)
   }, [])
 
+  // ---------- Map layer helpers ----------
+
+  const clearMapLayers = useCallback(() => {
+    if (!mapRef.current) return
+    mapRef.current.eachLayer((layer) => {
+      if (
+        (layer instanceof L.Path || layer instanceof L.Marker) &&
+        !(layer as unknown as L.TileLayer).getTileUrl
+      ) {
+        mapRef.current!.removeLayer(layer)
+      }
+    })
+  }, [])
+
   // ---------- Shape handlers ----------
 
   const handleShapeCreated = useCallback((feature: GeoJSONFeature) => {
@@ -349,27 +371,20 @@ export function MapEditor() {
 
   const handleReset = () => {
     if (mapData) {
-      // Reset to last saved state from Firestore
       setShapes(mapData.shapes || [])
-      // Remove all drawn layers from the map and re-add saved ones
-      if (mapRef.current) {
-        mapRef.current.eachLayer((layer) => {
-          if (
-            layer instanceof L.Path ||
-            layer instanceof L.Marker
-          ) {
-            // Keep tile layers, remove drawn shapes
-            if (!(layer as unknown as L.TileLayer).getTileUrl) {
-              mapRef.current!.removeLayer(layer)
-            }
-          }
-        })
-      }
+      clearMapLayers()
+      setShapeRenderKey((k) => k + 1)
       useToastStore.getState().addToast('Karte auf letzten Stand zurückgesetzt', 'info')
     } else {
       setShapes([])
+      clearMapLayers()
       useToastStore.getState().addToast('Alle Zeichnungen entfernt', 'info')
     }
+  }
+
+  const handleRestoreBackup = async (backupId: string) => {
+    pendingRerenderRef.current = true
+    await restoreBackup(backupId)
   }
 
   const handleDelete = async () => {
@@ -535,11 +550,13 @@ export function MapEditor() {
           <FlyToLocation center={initialCenter} zoom={initialZoom} bearing={initialBearing} />
           <SearchFly target={searchTarget} />
           <GeomanControls
+            key={shapeRenderKey}
             onShapeCreated={handleShapeCreated}
             onShapeEdited={handleShapeEdited}
             onShapeDeleted={handleShapeDeleted}
             activeCategory={activeCategory}
             activeColor={activeColor}
+            initialShapes={shapes}
           />
         </MapContainer>
       </div>
@@ -709,7 +726,7 @@ export function MapEditor() {
                   <div className="flex items-center gap-1 shrink-0">
                     <Button
                       variant="ghost"
-                      onClick={() => restoreBackup(backup.id)}
+                      onClick={() => handleRestoreBackup(backup.id)}
                       className="text-xs px-2 py-1 text-primary-600 hover:text-primary-700 hover:bg-primary-50"
                     >
                       Wiederherstellen

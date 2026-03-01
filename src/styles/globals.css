@@ -74,3 +74,15 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-warm-400);
 }
+
+/* Map shape labels */
+.shape-label {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-warm-800);
+  text-shadow: 0 0 4px white, 0 0 4px white, 0 0 4px white;
+  white-space: nowrap;
+}

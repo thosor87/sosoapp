@@ -15,6 +15,57 @@ import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { MapDocument, MapBackup, GeoJSONFeature } from '@/lib/firebase/types'
 
+/**
+ * Firestore doesn't support nested arrays (e.g. [[1,2],[3,4]]).
+ * GeoJSON coordinates for LineStrings/Polygons ARE nested arrays.
+ * Solution: JSON.stringify coordinates before saving, parse back on load.
+ */
+function serializeShapes(shapes: GeoJSONFeature[]): unknown[] {
+  return shapes.map((s) => ({
+    ...s,
+    geometry: {
+      ...s.geometry,
+      coordinates: JSON.stringify(s.geometry.coordinates),
+    },
+  }))
+}
+
+function deserializeShapes(shapes: unknown[]): GeoJSONFeature[] {
+  if (!Array.isArray(shapes)) return []
+  return shapes.map((raw) => {
+    const s = raw as Record<string, unknown>
+    const geo = s.geometry as Record<string, unknown>
+    return {
+      ...s,
+      geometry: {
+        ...geo,
+        coordinates:
+          typeof geo.coordinates === 'string'
+            ? JSON.parse(geo.coordinates)
+            : geo.coordinates,
+      },
+    } as GeoJSONFeature
+  })
+}
+
+function serializeBackups(backups: MapBackup[]): unknown[] {
+  return backups.map((b) => ({
+    ...b,
+    shapes: serializeShapes(b.shapes),
+  }))
+}
+
+function deserializeBackups(backups: unknown[]): MapBackup[] {
+  if (!Array.isArray(backups)) return []
+  return backups.map((raw) => {
+    const b = raw as Record<string, unknown>
+    return {
+      ...b,
+      shapes: deserializeShapes(b.shapes as unknown[]),
+    }
+  }) as MapBackup[]
+}
+
 interface MapState {
   mapData: MapDocument | null
   isLoading: boolean
@@ -52,7 +103,14 @@ export const useMapStore = create<MapState>((set, get) => ({
           set({ mapData: null, isLoading: false })
         } else {
           const docSnap = snapshot.docs[0]
-          const mapData = { id: docSnap.id, ...docSnap.data() } as MapDocument
+          const raw = docSnap.data()
+          // Deserialize coordinates back from JSON strings
+          const mapData: MapDocument = {
+            id: docSnap.id,
+            ...raw,
+            shapes: deserializeShapes(raw.shapes || []),
+            backups: deserializeBackups(raw.backups || []),
+          } as MapDocument
           set({ mapData, isLoading: false })
         }
       },
@@ -68,6 +126,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   saveMap: async (eventId, data) => {
     try {
       const { mapData } = get()
+      // Serialize coordinates to avoid Firestore nested-array error
+      const serializedShapes = serializeShapes(data.shapes)
 
       if (mapData) {
         // Create backup of current state before saving
@@ -90,18 +150,28 @@ export const useMapStore = create<MapState>((set, get) => ({
 
         const existingBackups = mapData.backups || []
         // Keep max 10 backups
-        const backups = [backup, ...existingBackups].slice(0, 10)
+        const backups = serializeBackups(
+          [backup, ...existingBackups].slice(0, 10)
+        )
 
         const docRef = doc(db, 'maps', mapData.id)
         await updateDoc(docRef, {
-          ...data,
+          name: data.name,
+          center: data.center,
+          zoom: data.zoom,
+          bearing: data.bearing,
+          shapes: serializedShapes,
           backups,
           updatedAt: serverTimestamp(),
         })
       } else {
         await addDoc(collection(db, 'maps'), {
           eventId,
-          ...data,
+          name: data.name,
+          center: data.center,
+          zoom: data.zoom,
+          bearing: data.bearing,
+          shapes: serializedShapes,
           backups: [],
           isPublished: false,
           createdAt: serverTimestamp(),
@@ -127,7 +197,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
       const docRef = doc(db, 'maps', mapData.id)
       await updateDoc(docRef, {
-        shapes: backup.shapes,
+        shapes: serializeShapes(backup.shapes),
         center: backup.center,
         zoom: backup.zoom,
         bearing: backup.bearing ?? 0,
@@ -146,12 +216,15 @@ export const useMapStore = create<MapState>((set, get) => ({
       const { mapData } = get()
       if (!mapData) return
 
-      const backups = (mapData.backups || []).map((b) =>
+      const updatedBackups = (mapData.backups || []).map((b) =>
         b.id === backupId ? { ...b, name } : b
       )
 
       const docRef = doc(db, 'maps', mapData.id)
-      await updateDoc(docRef, { backups, updatedAt: serverTimestamp() })
+      await updateDoc(docRef, {
+        backups: serializeBackups(updatedBackups),
+        updatedAt: serverTimestamp(),
+      })
     } catch (error) {
       console.error('Error renaming backup:', error)
     }
@@ -162,11 +235,11 @@ export const useMapStore = create<MapState>((set, get) => ({
       const { mapData } = get()
       if (!mapData) return
 
-      const backups = (mapData.backups || []).filter((b) => b.id !== backupId)
+      const remaining = (mapData.backups || []).filter((b) => b.id !== backupId)
 
       const docRef = doc(db, 'maps', mapData.id)
       await updateDoc(docRef, {
-        backups,
+        backups: serializeBackups(remaining),
         updatedAt: serverTimestamp(),
       })
 

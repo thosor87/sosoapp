@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -96,6 +96,46 @@ function LayerToggle({
   )
 }
 
+function CircleLayers({
+  circles,
+  buildPopup,
+}: {
+  circles: GeoJSONFeature[]
+  buildPopup: (category: string, label: string) => string
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    const layers: L.Circle[] = []
+    circles.forEach((shape) => {
+      const coords = shape.geometry.coordinates as number[]
+      const circle = L.circle([coords[1], coords[0]], {
+        radius: shape.properties.radius || 50,
+        color: shape.properties.strokeColor || '#44403c',
+        weight: shape.properties.strokeWidth || 2,
+        fillColor: shape.properties.color || '#8b5cf6',
+        fillOpacity: shape.properties.opacity ?? 0.5,
+      })
+      const category = shape.properties.category || 'other'
+      const label = shape.properties.label || ''
+      circle.bindPopup(buildPopup(category, label))
+      const icon = CATEGORY_ICONS[category] || ''
+      circle.bindTooltip(label ? `${icon} ${label}` : icon, {
+        permanent: true,
+        direction: 'center',
+        className: 'shape-label',
+      })
+      circle.addTo(map)
+      layers.push(circle)
+    })
+    return () => {
+      layers.forEach((l) => map.removeLayer(l))
+    }
+  }, [map, circles, buildPopup])
+
+  return null
+}
+
 function SetBearing({ bearing }: { bearing: number }) {
   const map = useMap()
   useEffect(() => {
@@ -115,17 +155,31 @@ export function MapDisplay({ mapData }: MapDisplayProps) {
 
   const center: [number, number] = [mapData.center.lat, mapData.center.lng]
 
-  // Build a GeoJSON FeatureCollection from the shapes
+  // Separate circles from other shapes (GeoJSON can't represent circles natively)
+  const { circleShapes, otherShapes } = useMemo(() => {
+    const circles: GeoJSONFeature[] = []
+    const others: GeoJSONFeature[] = []
+    for (const shape of mapData.shapes || []) {
+      if (shape.properties.shapeType === 'Circle' && shape.geometry.type === 'Point') {
+        circles.push(shape)
+      } else {
+        others.push(shape)
+      }
+    }
+    return { circleShapes: circles, otherShapes: others }
+  }, [mapData.shapes])
+
+  // Build a GeoJSON FeatureCollection from non-circle shapes
   const geojsonData = useMemo(() => {
     return {
       type: 'FeatureCollection' as const,
-      features: mapData.shapes.map((shape: GeoJSONFeature) => ({
+      features: otherShapes.map((shape: GeoJSONFeature) => ({
         type: 'Feature' as const,
         geometry: shape.geometry,
         properties: shape.properties,
       })),
     }
-  }, [mapData.shapes])
+  }, [otherShapes])
 
   // Style each feature based on its properties
   const featureStyle = (feature: GeoJSON.Feature | undefined) => {
@@ -138,20 +192,30 @@ export function MapDisplay({ mapData }: MapDisplayProps) {
     }
   }
 
-  // Bind popups on each feature
+  // Build popup HTML for a shape
+  const buildPopup = useCallback((category: string, label: string) => {
+    const icon = CATEGORY_ICONS[category] || ''
+    const displayLabel = label || CATEGORY_LABELS[category] || category
+    return `<div style="text-align:center;font-size:14px;">
+      <div style="font-size:24px;margin-bottom:4px;">${icon}</div>
+      <strong>${displayLabel}</strong>
+    </div>`
+  }, [])
+
+  // Bind popups and permanent labels on each feature
   const onEachFeature = (feature: GeoJSON.Feature, layer: L.Layer) => {
     if (!feature.properties) return
     const category = feature.properties.category || 'other'
-    const icon = CATEGORY_ICONS[category] || ''
-    const label =
-      feature.properties.label || CATEGORY_LABELS[category] || category
+    const label = feature.properties.label || ''
+    layer.bindPopup(buildPopup(category, label))
 
-    layer.bindPopup(
-      `<div style="text-align:center;font-size:14px;">
-        <div style="font-size:24px;margin-bottom:4px;">${icon}</div>
-        <strong>${label}</strong>
-      </div>`
-    )
+    const icon = CATEGORY_ICONS[category] || ''
+    const tooltipText = label ? `${icon} ${label}` : icon
+    layer.bindTooltip(tooltipText, {
+      permanent: true,
+      direction: 'center',
+      className: 'shape-label',
+    })
   }
 
   const handleDownload = () => {
@@ -189,6 +253,9 @@ export function MapDisplay({ mapData }: MapDisplayProps) {
               style={featureStyle}
               onEachFeature={onEachFeature}
             />
+          )}
+          {circleShapes.length > 0 && (
+            <CircleLayers circles={circleShapes} buildPopup={buildPopup} />
           )}
         </MapContainer>
       </div>
