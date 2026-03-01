@@ -30,8 +30,8 @@ async function seed() {
     title: 'Sorings Sommerfest 2026',
     date: Timestamp.fromDate(new Date('2026-07-18T14:00:00')),
     location: 'Bei Familie Soring',
-    accessToken: .CHANGE_ME.,
-    adminPasswordHash: .CHANGE_ME.,
+    accessToken: 'CHANGE_ME',
+    adminPasswordHash: 'CHANGE_ME',
     announcements: [
       {
         id: 'welcome',

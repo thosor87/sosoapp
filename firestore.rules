@@ -1,25 +1,73 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Events ──────────────────────────────────────────────
+    // Lesen: alle (Token-Validierung, Ankündigungen, Settings)
+    // Schreiben: nur Update mit Basis-Validierung, kein Löschen
     match /events/{eventId} {
       allow read: if true;
-      allow write: if true;
+      allow create: if request.resource.data.title is string
+                    && request.resource.data.isRegistrationOpen is bool;
+      allow update: if request.resource.data.title is string
+                    && request.resource.data.isRegistrationOpen is bool;
+      allow delete: if false;
     }
+
+    // ── Registrierungen ─────────────────────────────────────
+    // Lesen: alle | Erstellen/Ändern: mit Typ- und Wertevalidierung
+    // Löschen: erlaubt (für "Wieder abmelden")
     match /registrations/{regId} {
       allow read: if true;
       allow create: if request.resource.data.eventId is string
                     && request.resource.data.familyName is string
-                    && request.resource.data.adultsCount is number;
-      allow update: if true;
+                    && request.resource.data.familyName.size() > 0
+                    && request.resource.data.familyName.size() <= 100
+                    && request.resource.data.contactName is string
+                    && request.resource.data.adultsCount is number
+                    && request.resource.data.adultsCount >= 0
+                    && request.resource.data.adultsCount <= 50
+                    && request.resource.data.childrenCount is number
+                    && request.resource.data.childrenCount >= 0
+                    && request.resource.data.childrenCount <= 50;
+      allow update: if request.resource.data.familyName is string
+                    && request.resource.data.familyName.size() > 0
+                    && request.resource.data.familyName.size() <= 100
+                    && request.resource.data.contactName is string
+                    && request.resource.data.adultsCount is number
+                    && request.resource.data.adultsCount >= 0
+                    && request.resource.data.adultsCount <= 50
+                    && request.resource.data.childrenCount is number
+                    && request.resource.data.childrenCount >= 0
+                    && request.resource.data.childrenCount <= 50;
       allow delete: if true;
     }
+
+    // ── Timeline ────────────────────────────────────────────
+    // Pflichtfelder + Längenbegrenzung
     match /timeline/{itemId} {
       allow read: if true;
-      allow write: if true;
+      allow create, update: if request.resource.data.eventId is string
+                            && request.resource.data.title is string
+                            && request.resource.data.title.size() <= 500
+                            && request.resource.data.time is string
+                            && request.resource.data.order is number;
+      allow delete: if true;
     }
+
+    // ── Karten ──────────────────────────────────────────────
+    // Pflichtfelder-Validierung
     match /maps/{mapId} {
       allow read: if true;
-      allow write: if true;
+      allow create, update: if request.resource.data.eventId is string
+                            && request.resource.data.name is string
+                            && request.resource.data.name.size() <= 200;
+      allow delete: if true;
+    }
+
+    // ── Alles andere: gesperrt ──────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
