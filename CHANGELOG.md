@@ -2,6 +2,28 @@
 
 Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
+## [1.3.0] – 2026-03-01
+
+### Sicherheit & Infrastruktur
+
+**Sicherheit**
+- Firestore Security Rules verschärft: Typ-Validierung, Wertebegrenzung, Event-Löschung gesperrt
+- Catch-all-Regel sperrt Zugriff auf unbekannte Collections
+- Sensible Daten (Passwörter, Token) aus Git-History entfernt
+- Seed-Script liest Firebase-Config aus `.env` statt hardcoded
+- API-Key-Einschränkung in Google Cloud Console
+
+**Infrastruktur**
+- GitHub Actions CI/CD-Pipeline mit automatischem Firebase-Deploy
+- Lizenz auf CC BY-NC 4.0 (privat ja, kommerziell nein)
+- Branch Protection: Force-Push und Branch-Löschung blockiert
+
+**Bugfixes**
+- Datumsanzeige in Event-Einstellungen: Zeitzonen-Bug behoben (UTC → lokal)
+- tsconfig.node.json: scripts/ für Node-Typen inkludiert
+
+---
+
 ## [1.2.0] – 2026-03-01
 
 ### UX-Verbesserungen
