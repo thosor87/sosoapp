@@ -11,7 +11,7 @@ export function validateStep1(data: Step1Data): ValidationResult {
   const errors: Record<string, string> = {}
 
   if (!data.familyName.trim()) {
-    errors.familyName = 'Familienname ist erforderlich'
+    errors.familyName = 'Haushalt/Familie ist erforderlich'
   }
 
   if (!data.contactName.trim()) {

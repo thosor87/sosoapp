@@ -6,10 +6,12 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
+import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
 
 interface RegistrationState {
@@ -23,6 +25,7 @@ interface RegistrationState {
     id: string,
     data: Partial<Registration>
   ) => Promise<void>
+  deleteRegistration: (id: string) => Promise<void>
   getRegistration: (id: string) => Registration | undefined
 }
 
@@ -78,6 +81,16 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       ...data,
       updatedAt: serverTimestamp(),
     })
+  },
+
+  deleteRegistration: async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'registrations', id))
+      useToastStore.getState().addToast('Anmeldung zurückgezogen', 'success')
+    } catch (error) {
+      console.error('Error deleting registration:', error)
+      useToastStore.getState().addToast('Fehler beim Löschen der Anmeldung', 'error')
+    }
   },
 
   getRegistration: (id: string) => {

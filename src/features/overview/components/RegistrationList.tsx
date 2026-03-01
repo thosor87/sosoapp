@@ -42,7 +42,7 @@ export function RegistrationList() {
             </h2>
             <div className="w-full sm:w-64">
               <Input
-                placeholder="Familie suchen..."
+                placeholder="Haushalt suchen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -64,7 +64,7 @@ export function RegistrationList() {
                 <thead>
                   <tr className="border-b border-warm-100 bg-warm-50/50">
                     <th className="text-left text-xs font-medium text-warm-500 uppercase tracking-wider px-6 py-3">
-                      Familie
+                      Haushalt
                     </th>
                     <th className="text-left text-xs font-medium text-warm-500 uppercase tracking-wider px-6 py-3">
                       Ansprechpartner

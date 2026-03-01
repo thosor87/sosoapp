@@ -62,7 +62,7 @@ export function RegistrationManager() {
 
   const handleCSVExport = () => {
     const headers = [
-      'Familienname',
+      'Haushalt/Familie',
       'Ansprechpartner',
       'Erwachsene',
       'Kinder',
@@ -135,7 +135,7 @@ export function RegistrationManager() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-warm-100 bg-warm-50">
-              <th className="px-4 py-3 text-left font-medium text-warm-600">Familienname</th>
+              <th className="px-4 py-3 text-left font-medium text-warm-600">Haushalt/Familie</th>
               <th className="px-4 py-3 text-left font-medium text-warm-600 hidden sm:table-cell">Ansprechpartner</th>
               <th className="px-4 py-3 text-center font-medium text-warm-600 hidden md:table-cell">Erw.</th>
               <th className="px-4 py-3 text-center font-medium text-warm-600 hidden md:table-cell">Kinder</th>

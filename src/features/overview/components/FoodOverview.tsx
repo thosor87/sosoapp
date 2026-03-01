@@ -45,10 +45,10 @@ function FoodSection({
                 <span className="text-lg">{emoji}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-warm-700">
-                    {item.familyName}
-                  </p>
-                  <p className="text-sm text-warm-500 truncate">
                     {item.description}
+                  </p>
+                  <p className="text-xs text-warm-400">
+                    {item.familyName}
                   </p>
                 </div>
               </motion.div>

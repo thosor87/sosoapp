@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Toggle } from '@/components/ui/Toggle'
 import { Card } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
 import { useAuthStore } from '@/features/auth/store'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
@@ -81,6 +82,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   const eventId = useAuthStore((s) => s.eventId)
   const createRegistration = useRegistrationStore((s) => s.createRegistration)
   const updateRegistration = useRegistrationStore((s) => s.updateRegistration)
+  const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)
   const registrations = useRegistrationStore((s) => s.registrations)
   const addToast = useToastStore((s) => s.addToast)
 
@@ -92,6 +94,8 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showUnregisterConfirm, setShowUnregisterConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const isEditing = !!editRegistration
 
@@ -233,6 +237,21 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       addToast('Fehler beim Speichern. Bitte versuche es erneut.', 'error')
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleUnregister = async () => {
+    if (!editRegistration) return
+    setIsDeleting(true)
+    try {
+      await deleteRegistration(editRegistration.id)
+      setShowUnregisterConfirm(false)
+      onClose?.()
+    } catch (error) {
+      console.error('Unregister error:', error)
+      addToast('Fehler beim Abmelden. Bitte versuche es erneut.', 'error')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -430,10 +449,10 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
               </div>
 
               <Input
-                label="Familienname"
+                label="Haushalt/Familie"
                 value={formData.familyName}
                 onChange={(e) => updateField('familyName', e.target.value)}
-                placeholder="z.B. Müller"
+                placeholder="z.B. Sorings im Norden"
                 error={errors.familyName}
               />
 
@@ -462,6 +481,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   max={20}
                 />
               </div>
+
             </motion.div>
           )}
 
@@ -709,7 +729,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                 <div className="rounded-xl bg-warm-50 p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-warm-600">
                     <span>{'\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66'}</span>
-                    <span>Familie</span>
+                    <span>Haushalt</span>
                   </div>
                   <p className="font-semibold text-warm-800">
                     {formData.familyName}
@@ -795,6 +815,19 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
         </AnimatePresence>
       </div>
 
+      {/* Unregister hint */}
+      {isEditing && step === 0 && (
+        <div className="px-6 pb-2">
+          <button
+            type="button"
+            onClick={() => setShowUnregisterConfirm(true)}
+            className="text-sm text-warm-400 hover:text-red-500 transition-colors cursor-pointer"
+          >
+            Wieder abmelden
+          </button>
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="px-6 pb-6 flex items-center justify-between gap-3">
         {step > 0 ? (
@@ -824,6 +857,38 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
           </Button>
         )}
       </div>
+
+      {/* Unregister Confirmation Modal */}
+      <Modal
+        isOpen={showUnregisterConfirm}
+        onClose={() => setShowUnregisterConfirm(false)}
+        title="Anmeldung zurückziehen?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-warm-600">
+            Möchtest du die Anmeldung für <strong>{formData.familyName}</strong> wirklich
+            zurückziehen? Alle Daten (Personen, Essen, Zelten) werden unwiderruflich gelöscht.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setShowUnregisterConfirm(false)}
+              type="button"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleUnregister}
+              disabled={isDeleting}
+              type="button"
+              className="!border-red-300 !text-red-600 hover:!bg-red-50"
+            >
+              {isDeleting ? 'Wird gelöscht...' : 'Ja, abmelden'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Card>
   )
 }

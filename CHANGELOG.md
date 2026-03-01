@@ -2,6 +2,27 @@
 
 Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
+## [1.2.0] – 2026-03-01
+
+### UX-Verbesserungen
+
+**Neue Features**
+- „Wieder abmelden"-Funktion: Beim Bearbeiten einer Anmeldung kann diese mit Bestätigungsdialog zurückgezogen werden
+- Burger-Menü auf Mobile/Tablet statt fixierter Bottom-Tab-Bar (kein Overlap mehr mit Eingabefeldern)
+- Animierter Hamburger-Button (3 Striche → X) mit Slide-Down-Dropdown
+
+**Verbesserungen**
+- „Familienname" umbenannt in „Haushalt/Familie" (Label, Validierung, Tabellen, CSV-Export)
+- Essens-Übersicht: Kuchen/Salat-Beschreibung oben hervorgehoben, Haushalt-Name klein darunter
+- Placeholder im Formular: „z.B. Sorings im Norden"
+
+**Technik**
+- `deleteRegistration()` im Registration-Store (Firestore deleteDoc)
+- Einheitlicher Header für alle Breakpoints (Desktop: horizontale Nav, Mobile: Burger-Menü)
+- Bottom-Padding und Margin-Hacks für Bottom-Bar entfernt
+
+---
+
 ## [1.1.0] – 2026-03-01
 
 ### Karten-Feature komplett überarbeitet

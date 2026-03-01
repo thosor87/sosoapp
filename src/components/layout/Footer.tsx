@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer className="bg-warm-800 text-warm-300 py-8 px-6 text-center mb-16 md:mb-0">
+    <footer className="bg-warm-800 text-warm-300 py-8 px-6 text-center">
       <div className="mx-auto max-w-5xl space-y-3">
         <div className="flex items-center justify-center gap-2 text-white">
           <span className="text-xl">{'\u2600\uFE0F'}</span>
