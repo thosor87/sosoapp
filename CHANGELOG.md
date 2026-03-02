@@ -2,6 +2,17 @@
 
 Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
+## [1.4.1] – 2026-03-02
+
+### Tägliches CSV-Backup & erweiterter Export
+
+**Neue Features**
+- Automatisches tägliches Backup aller Anmeldungen als CSV in separates privates Repo
+- GitHub Actions Workflow mit Firebase Admin SDK (täglich 08:00 MESZ + manuell auslösbar)
+- CSV-Export (Admin + Backup) um E-Mail, Angemeldet am, Zuletzt geändert erweitert
+
+---
+
 ## [1.4.0] – 2026-03-02
 
 ### E-Mail-Bestätigungen & Bearbeitungslinks
