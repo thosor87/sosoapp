@@ -18,7 +18,9 @@ export function validateStep1(data: Step1Data): ValidationResult {
     errors.contactName = 'Ansprechpartner ist erforderlich'
   }
 
-  if (data.email && data.email.trim()) {
+  if (!data.email || !data.email.trim()) {
+    errors.email = 'E-Mail-Adresse ist erforderlich'
+  } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(data.email.trim())) {
       errors.email = 'Bitte gib eine gültige E-Mail-Adresse ein'

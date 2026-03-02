@@ -497,7 +497,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
               <div>
                 <Input
-                  label="E-Mail (optional)"
+                  label="E-Mail"
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
