@@ -1,5 +1,8 @@
-import { addDoc, collection } from 'firebase/firestore'
-import { db } from './config'
+import emailjs from '@emailjs/browser'
+
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 interface RegistrationSummary {
   id: string
@@ -63,10 +66,16 @@ ${content}
 }
 
 async function sendMail(to: string, subject: string, html: string) {
-  await addDoc(collection(db, 'mail'), {
-    to: [to],
-    message: { subject, html },
-  })
+  await emailjs.send(
+    EMAILJS_SERVICE_ID,
+    EMAILJS_TEMPLATE_ID,
+    {
+      to_email: to,
+      subject,
+      message_html: html,
+    },
+    EMAILJS_PUBLIC_KEY
+  )
 }
 
 /** Nach erfolgreicher Anmeldung */

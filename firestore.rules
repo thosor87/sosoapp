@@ -64,15 +64,6 @@ service cloud.firestore {
                             && request.resource.data.name.size() <= 200;
       allow delete: if true;
     }
-
-    // ── Mail (Trigger Email Extension) ──────────────────────
-    // App darf Mail-Dokumente erstellen, Extension verarbeitet sie per Admin SDK
-    match /mail/{mailId} {
-      allow create: if request.resource.data.to is list
-                    && request.resource.data.message is map;
-      allow read, update, delete: if false;
-    }
-
     // ── Alles andere: gesperrt ──────────────────────────────
     match /{document=**} {
       allow read, write: if false;
