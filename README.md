@@ -6,6 +6,8 @@ Web-App zur Planung und Organisation des jährlichen Sorings-Sommerfests mit ca.
 
 - **Magic-Link-Zugang** – Ein geteilter Link für alle Gäste (`party.soring.de/?token=...`)
 - **Mehrstufiges Anmeldeformular** – Familie, Essen (Kuchen/Salat), Zelten mit Duplikat-Erkennung
+- **E-Mail-Bestätigungen** – Anmeldebestätigung, Änderungs- und Löschungsbenachrichtigung via EmailJS
+- **Bearbeitungslink per E-Mail** – Direktlink zum Editieren der eigenen Anmeldung
 - **Echtzeit-Übersicht** – Statistik-Karten, Anmeldungsliste, Essens- & Zelter-Listen mit Summen
 - **Admin-Dashboard** – Ankündigungen, Ablaufplan, Anmeldungsverwaltung, Event-Einstellungen
 - **Ablaufplan/Timeline** – Kategorien, Drag & Drop, öffentliche + interne Notizen
@@ -23,6 +25,7 @@ Web-App zur Planung und Organisation des jährlichen Sorings-Sommerfests mit ca.
 | State | Zustand |
 | Routing | React Router v7 |
 | Karte | react-leaflet + leaflet-geoman |
+| E-Mail | EmailJS (SMTP via Goneo) |
 | Backend | Firebase (Firestore + Hosting) |
 | CI/CD | GitHub Actions |
 
@@ -44,7 +47,7 @@ src/
     map/            # Karten-Editor, Karten-Anzeige, Store
   pages/            # LandingPage, OverviewPage, AdminPage, NotFoundPage
   lib/
-    firebase/       # Config, Firestore-Types
+    firebase/       # Config, Firestore-Types, E-Mail-Versand
     utils/          # cn (classnames)
 ```
 
@@ -70,7 +73,7 @@ npx firebase deploy --only hosting
 
 ## Umgebungsvariablen
 
-Siehe `.env.example` – benötigt Firebase-Projekt-Credentials:
+Siehe `.env.example` – benötigt Firebase- und EmailJS-Credentials:
 
 ```
 VITE_FIREBASE_API_KEY=
@@ -79,6 +82,9 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
+VITE_EMAILJS_SERVICE_ID=
+VITE_EMAILJS_TEMPLATE_ID=
+VITE_EMAILJS_PUBLIC_KEY=
 ```
 
 ## Firestore-Datenmodell

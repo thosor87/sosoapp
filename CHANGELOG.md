@@ -2,6 +2,33 @@
 
 Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
+## [1.4.0] – 2026-03-02
+
+### E-Mail-Bestätigungen & Bearbeitungslinks
+
+**Neue Features**
+- E-Mail-Bestätigung nach Anmeldung mit Zusammenfassung und Bearbeitungslink
+- E-Mail-Benachrichtigung bei Änderung einer Anmeldung (mit aktuellem Stand)
+- E-Mail-Benachrichtigung bei Löschung/Abmeldung (mit vorherigen Daten)
+- E-Mail-Feld im Anmeldeformular (Pflichtfeld)
+- Bearbeitungslink in E-Mails: `?edit=ID` öffnet Modal direkt auf der LandingPage
+- Hinweis-Box auf Übersichtsseite: „Bitte ändere nur deine eigene Anmeldung"
+
+**Technik**
+- E-Mail-Versand via EmailJS (Free Tier, 200 Mails/Monat, kein Blaze-Plan nötig)
+- EmailJS-Keys als Umgebungsvariablen (nicht im Quellcode)
+- GitHub Secrets für EmailJS-Credentials in CI/CD-Pipeline
+- Firestore `mail`-Collection und zugehörige Rules entfernt
+- `react-router-dom` als Dependency hinzugefügt
+
+**Bugfixes**
+- Zelten-Placeholder geändert (kein Strom verfügbar)
+- Modal scrollbar auf Mobilgeräten (Overlay-Scroll statt max-height)
+- Edit-Link liest URL-Parameter direkt via `window.location.search`
+- Shape-Resize/Vertex-Edits werden jetzt korrekt gespeichert
+
+---
+
 ## [1.3.0] – 2026-03-01
 
 ### Sicherheit & Infrastruktur
