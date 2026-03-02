@@ -1,0 +1,36 @@
+name: Daily Registration Backup
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Täglich um 06:00 UTC (08:00 MESZ)
+  workflow_dispatch: # Manuell auslösbar
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install firebase-admin
+        run: npm install firebase-admin
+
+      - name: Export registrations to CSV
+        run: node scripts/export-registrations.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Push CSV to backup repo
+        env:
+          BACKUP_PAT: ${{ secrets.BACKUP_PAT }}
+        run: |
+          git clone https://x-access-token:${BACKUP_PAT}@github.com/thosor87/soringdataprivate.git backup-repo
+          cp backup-output/anmeldungen.csv backup-repo/
+          cd backup-repo
+          git config user.name "SoSo Backup Bot"
+          git config user.email "backup@soring.de"
+          git add .
+          git diff --cached --quiet || (git commit -m "Backup $(date -u +%Y-%m-%d)" && git push)

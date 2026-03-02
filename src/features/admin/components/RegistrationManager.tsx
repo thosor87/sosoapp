@@ -64,6 +64,7 @@ export function RegistrationManager() {
     const headers = [
       'Haushalt/Familie',
       'Ansprechpartner',
+      'E-Mail',
       'Erwachsene',
       'Kinder',
       'Gesamt',
@@ -75,11 +76,19 @@ export function RegistrationManager() {
       'Zelte',
       'Zelten-Notizen',
       'Anmerkungen',
+      'Angemeldet am',
+      'Zuletzt geändert',
     ]
+
+    const formatDate = (ts: import('firebase/firestore').Timestamp | undefined) =>
+      ts?.toDate?.()
+        ? ts.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : ''
 
     const rows = registrations.map((r) => [
       r.familyName,
       r.contactName,
+      r.email,
       r.adultsCount,
       r.childrenCount,
       r.adultsCount + r.childrenCount,
@@ -91,6 +100,8 @@ export function RegistrationManager() {
       r.camping.tentCount,
       r.camping.notes,
       r.comments,
+      formatDate(r.createdAt),
+      formatDate(r.updatedAt),
     ])
 
     const csvContent = [
