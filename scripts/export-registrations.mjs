@@ -80,10 +80,10 @@ async function exportRegistrations() {
 
   const csv = [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n')
 
-  // Ausgabe-Verzeichnis
-  mkdirSync('backup-output', { recursive: true })
+  // Ausgabe-Verzeichnis: soso-app/sommer2026/
+  mkdirSync('backup-output/soso-app/sommer2026', { recursive: true })
 
-  const filename = 'backup-output/anmeldungen.csv'
+  const filename = 'backup-output/soso-app/sommer2026/anmeldungen.csv'
   writeFileSync(filename, '\uFEFF' + csv, 'utf-8') // BOM for Excel
 
   console.log(`${snapshot.size} Anmeldungen exportiert → ${filename}`)

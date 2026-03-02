@@ -28,7 +28,7 @@ jobs:
           BACKUP_PAT: ${{ secrets.BACKUP_PAT }}
         run: |
           git clone https://x-access-token:${BACKUP_PAT}@github.com/thosor87/soringdataprivate.git backup-repo
-          cp backup-output/anmeldungen.csv backup-repo/
+          cp -r backup-output/soso-app backup-repo/
           cd backup-repo
           git config user.name "SoSo Backup Bot"
           git config user.email "backup@soring.de"
