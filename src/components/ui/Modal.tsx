@@ -37,7 +37,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', duration: 0.3 }}
             className={cn(
-              'relative w-full max-w-lg rounded-2xl bg-white shadow-xl p-6',
+              'relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl p-6',
               className
             )}
           >
