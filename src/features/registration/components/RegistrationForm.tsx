@@ -236,7 +236,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
         // Bestätigungsmail senden (fire-and-forget)
         if (registrationData.email && accessToken) {
           sendConfirmationEmail(
-            { ...registrationData, eventId, id: regId },
+            { ...registrationData, id: regId },
             accessToken
           ).catch((err) => console.error('Email send failed:', err))
         }
