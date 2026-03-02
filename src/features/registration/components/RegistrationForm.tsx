@@ -12,7 +12,7 @@ import { useToastStore } from '@/components/feedback/Toast'
 import { validateStep1, validateStep2, validateStep3 } from '@/features/registration/validation'
 import { NumberStepper } from './NumberStepper'
 import type { Registration } from '@/lib/firebase/types'
-import { sendConfirmationEmail } from '@/lib/firebase/sendConfirmationEmail'
+import { sendConfirmationEmail, sendUpdateEmail, sendDeletionEmail } from '@/lib/firebase/sendConfirmationEmail'
 
 interface RegistrationFormProps {
   editRegistration?: Registration
@@ -219,6 +219,13 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
       if (isEditing && editRegistration) {
         await updateRegistration(editRegistration.id, registrationData)
+        // Änderungsmail senden (fire-and-forget)
+        if (registrationData.email && accessToken) {
+          sendUpdateEmail(
+            { ...registrationData, id: editRegistration.id },
+            accessToken
+          ).catch((err) => console.error('Update email failed:', err))
+        }
         addToast('Änderungen gespeichert!', 'success')
         onClose?.()
       } else {
@@ -253,6 +260,21 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     if (!editRegistration) return
     setIsDeleting(true)
     try {
+      // Löschungsmail senden bevor der Eintrag gelöscht wird
+      const email = editRegistration.email ?? formData.email.trim()
+      if (email) {
+        sendDeletionEmail({
+          id: editRegistration.id,
+          contactName: editRegistration.contactName,
+          email,
+          familyName: editRegistration.familyName,
+          adultsCount: editRegistration.adultsCount,
+          childrenCount: editRegistration.childrenCount,
+          food: editRegistration.food,
+          camping: editRegistration.camping,
+          comments: editRegistration.comments,
+        }).catch((err) => console.error('Deletion email failed:', err))
+      }
       await deleteRegistration(editRegistration.id)
       setShowUnregisterConfirm(false)
       onClose?.()
