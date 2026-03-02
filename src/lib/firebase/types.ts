@@ -32,6 +32,7 @@ export interface Registration {
   eventId: string
   familyName: string
   contactName: string
+  email: string
   adultsCount: number
   childrenCount: number
   food: FoodContribution

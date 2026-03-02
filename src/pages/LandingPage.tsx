@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { Modal } from '@/components/ui/Modal'
 import { useAuthStore } from '@/features/auth/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { useRegistrationStore } from '@/features/registration/store'
@@ -9,6 +11,7 @@ import { useMapStore } from '@/features/map/store'
 import { RegistrationForm } from '@/features/registration/components/RegistrationForm'
 import { TimelineDisplay } from '@/features/timeline/components/TimelineDisplay'
 import { MapDisplay } from '@/features/map/components/MapDisplay'
+import type { Registration } from '@/lib/firebase/types'
 
 export function LandingPage() {
   const eventConfig = useAuthStore((s) => s.eventConfig)
@@ -16,6 +19,10 @@ export function LandingPage() {
   const accessToken = useAuthStore((s) => s.accessToken)
   const addToast = useToastStore((s) => s.addToast)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null)
+  const registrations = useRegistrationStore((s) => s.registrations)
+  const isRegLoading = useRegistrationStore((s) => s.isLoading)
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/?token=${accessToken}`
@@ -52,6 +59,18 @@ export function LandingPage() {
     const unsubscribe = subscribeToMap(eventId)
     return () => unsubscribe()
   }, [eventId, subscribeToMap])
+
+  // Handle ?edit=REGISTRATION_ID from confirmation email
+  useEffect(() => {
+    const editRegId = searchParams.get('edit')
+    if (!editRegId || isRegLoading || registrations.length === 0) return
+    const reg = registrations.find((r) => r.id === editRegId)
+    if (reg) {
+      setEditingRegistration(reg)
+      searchParams.delete('edit')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams, registrations, isRegLoading])
 
   return (
     <PageContainer>
@@ -227,6 +246,20 @@ export function LandingPage() {
           </motion.div>
         </section>
       )}
+
+      {/* Edit Registration Modal (opened via ?edit=ID from confirmation email) */}
+      <Modal
+        isOpen={!!editingRegistration}
+        onClose={() => setEditingRegistration(null)}
+        title="Anmeldung bearbeiten"
+      >
+        {editingRegistration && (
+          <RegistrationForm
+            editRegistration={editingRegistration}
+            onClose={() => setEditingRegistration(null)}
+          />
+        )}
+      </Modal>
     </PageContainer>
   )
 }

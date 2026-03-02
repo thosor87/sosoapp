@@ -25,10 +25,13 @@ export function OverviewPage() {
       <motion.h1
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-display font-bold text-warm-800 mb-6"
+        className="text-3xl font-display font-bold text-warm-800 mb-2"
       >
         Übersicht
       </motion.h1>
+      <p className="text-sm text-warm-400 mb-6">
+        Bitte ändere nur deine eigene Anmeldung. Nutze dafür am besten den Link aus deiner Bestätigungsmail.
+      </p>
 
       {/* Stat Cards */}
       <section className="mb-8">

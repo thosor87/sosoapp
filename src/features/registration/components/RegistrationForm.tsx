@@ -12,6 +12,7 @@ import { useToastStore } from '@/components/feedback/Toast'
 import { validateStep1, validateStep2, validateStep3 } from '@/features/registration/validation'
 import { NumberStepper } from './NumberStepper'
 import type { Registration } from '@/lib/firebase/types'
+import { sendConfirmationEmail } from '@/lib/firebase/sendConfirmationEmail'
 
 interface RegistrationFormProps {
   editRegistration?: Registration
@@ -21,6 +22,7 @@ interface RegistrationFormProps {
 interface FormData {
   familyName: string
   contactName: string
+  email: string
   adultsCount: number
   childrenCount: number
   food: {
@@ -50,6 +52,7 @@ function getInitialData(reg?: Registration): FormData {
     return {
       familyName: reg.familyName,
       contactName: reg.contactName,
+      email: reg.email ?? '',
       adultsCount: reg.adultsCount,
       childrenCount: reg.childrenCount,
       food: { ...reg.food },
@@ -60,6 +63,7 @@ function getInitialData(reg?: Registration): FormData {
   return {
     familyName: '',
     contactName: '',
+    email: '',
     adultsCount: 1,
     childrenCount: 0,
     food: {
@@ -80,6 +84,7 @@ function getInitialData(reg?: Registration): FormData {
 
 export function RegistrationForm({ editRegistration, onClose }: RegistrationFormProps) {
   const eventId = useAuthStore((s) => s.eventId)
+  const accessToken = useAuthStore((s) => s.accessToken)
   const createRegistration = useRegistrationStore((s) => s.createRegistration)
   const updateRegistration = useRegistrationStore((s) => s.updateRegistration)
   const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)
@@ -201,29 +206,33 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
     setIsSubmitting(true)
     try {
+      const registrationData = {
+        familyName: formData.familyName,
+        contactName: formData.contactName,
+        email: formData.email.trim(),
+        adultsCount: formData.adultsCount,
+        childrenCount: formData.childrenCount,
+        food: formData.food,
+        camping: formData.camping,
+        comments: formData.comments,
+      }
+
       if (isEditing && editRegistration) {
-        await updateRegistration(editRegistration.id, {
-          familyName: formData.familyName,
-          contactName: formData.contactName,
-          adultsCount: formData.adultsCount,
-          childrenCount: formData.childrenCount,
-          food: formData.food,
-          camping: formData.camping,
-          comments: formData.comments,
-        })
+        await updateRegistration(editRegistration.id, registrationData)
         addToast('Änderungen gespeichert!', 'success')
         onClose?.()
       } else {
-        await createRegistration({
+        const regId = await createRegistration({
           eventId,
-          familyName: formData.familyName,
-          contactName: formData.contactName,
-          adultsCount: formData.adultsCount,
-          childrenCount: formData.childrenCount,
-          food: formData.food,
-          camping: formData.camping,
-          comments: formData.comments,
+          ...registrationData,
         })
+        // Bestätigungsmail senden (fire-and-forget)
+        if (registrationData.email && accessToken) {
+          sendConfirmationEmail(
+            { ...registrationData, eventId, id: regId },
+            accessToken
+          ).catch((err) => console.error('Email send failed:', err))
+        }
         addToast('Anmeldung erfolgreich!', 'success')
         setShowSuccess(true)
         setTimeout(() => {
@@ -464,6 +473,20 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                 error={errors.contactName}
               />
 
+              <div>
+                <Input
+                  label="E-Mail (optional)"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  placeholder="fuer-bestaetigung@beispiel.de"
+                  error={errors.email}
+                />
+                <p className="text-xs text-warm-400 mt-1">
+                  Du bekommst eine Bestätigung mit Bearbeitungslink
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <NumberStepper
                   label="Erwachsene"
@@ -688,7 +711,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                         onChange={(e) =>
                           updateCamping('notes', e.target.value)
                         }
-                        placeholder="z.B. Brauchen wir Strom?"
+                        placeholder="z.B. Besondere Wünsche zum Zelten"
                       />
                     </motion.div>
                   )}
@@ -737,6 +760,11 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   <p className="text-sm text-warm-500">
                     Ansprechpartner: {formData.contactName}
                   </p>
+                  {formData.email.trim() && (
+                    <p className="text-sm text-warm-500">
+                      E-Mail: {formData.email.trim()}
+                    </p>
+                  )}
                   <p className="text-sm text-warm-500">
                     {formData.adultsCount} Erwachsene
                     {formData.childrenCount > 0 &&
