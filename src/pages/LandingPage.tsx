@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+// useSearchParams not needed - edit param read via window.location.search
 import { motion } from 'motion/react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Modal } from '@/components/ui/Modal'
@@ -19,7 +19,6 @@ export function LandingPage() {
   const accessToken = useAuthStore((s) => s.accessToken)
   const addToast = useToastStore((s) => s.addToast)
   const [linkCopied, setLinkCopied] = useState(false)
-  const [searchParams, setSearchParams] = useSearchParams()
   const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null)
   const registrations = useRegistrationStore((s) => s.registrations)
   const isRegLoading = useRegistrationStore((s) => s.isLoading)
@@ -62,15 +61,17 @@ export function LandingPage() {
 
   // Handle ?edit=REGISTRATION_ID from confirmation email
   useEffect(() => {
-    const editRegId = searchParams.get('edit')
+    const params = new URLSearchParams(window.location.search)
+    const editRegId = params.get('edit')
     if (!editRegId || isRegLoading || registrations.length === 0) return
     const reg = registrations.find((r) => r.id === editRegId)
     if (reg) {
       setEditingRegistration(reg)
-      searchParams.delete('edit')
-      setSearchParams(searchParams, { replace: true })
+      params.delete('edit')
+      const newSearch = params.toString()
+      window.history.replaceState({}, '', newSearch ? `?${newSearch}` : window.location.pathname)
     }
-  }, [searchParams, setSearchParams, registrations, isRegLoading])
+  }, [registrations, isRegLoading])
 
   return (
     <PageContainer>
