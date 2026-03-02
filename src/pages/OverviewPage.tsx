@@ -29,9 +29,11 @@ export function OverviewPage() {
       >
         Übersicht
       </motion.h1>
-      <p className="text-sm text-warm-400 mb-6">
-        Bitte ändere nur deine eigene Anmeldung. Nutze dafür am besten den Link aus deiner Bestätigungsmail.
-      </p>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <p className="text-sm font-medium text-amber-800">
+          Bitte ändere nur deine eigene Anmeldung. Nutze dafür am besten den Link aus deiner Bestätigungsmail.
+        </p>
+      </div>
 
       {/* Stat Cards */}
       <section className="mb-8">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import { motion } from 'motion/react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Modal } from '@/components/ui/Modal'
