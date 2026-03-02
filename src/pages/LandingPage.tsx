@@ -253,6 +253,7 @@ export function LandingPage() {
         isOpen={!!editingRegistration}
         onClose={() => setEditingRegistration(null)}
         title="Anmeldung bearbeiten"
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         {editingRegistration && (
           <RegistrationForm
