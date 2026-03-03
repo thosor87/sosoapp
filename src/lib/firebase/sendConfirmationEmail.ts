@@ -134,6 +134,33 @@ export async function sendUpdateEmail(
   )
 }
 
+/** Sendet nur den Bearbeitungslink auf Anfrage */
+export async function sendEditLinkEmail(
+  registration: Pick<RegistrationSummary, 'id' | 'contactName' | 'email' | 'familyName'>,
+  accessToken: string
+) {
+  if (!registration.email?.trim()) return
+
+  const editLink = `${window.location.origin}/?token=${accessToken}&edit=${registration.id}`
+
+  const html = wrapHtml(`
+  <p style="color: #a8a29e; margin-top: 0;">Dein Bearbeitungslink</p>
+  <p>Hallo ${registration.contactName},</p>
+  <p>du hast einen Bearbeitungslink f&uuml;r deine Anmeldung angefragt. Hier kannst du sie bearbeiten oder zur&uuml;ckziehen:</p>
+  <p style="text-align: center; margin: 24px 0;">
+    <a href="${editLink}" style="display: inline-block; background: #F97316; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Anmeldung bearbeiten</a>
+  </p>
+  <p style="color: #a8a29e; font-size: 12px; margin-top: 32px; border-top: 1px solid #e7e5e4; padding-top: 16px;">
+    Direktlink: <a href="${editLink}" style="color: #F97316;">${editLink}</a>
+  </p>`)
+
+  await sendMail(
+    registration.email.trim(),
+    'Sorings Sommerfest \u2013 Dein Bearbeitungslink',
+    html
+  )
+}
+
 /** Nach Löschung / Abmeldung */
 export async function sendDeletionEmail(
   registration: RegistrationSummary
