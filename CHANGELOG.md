@@ -2,6 +2,19 @@
 
 Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
+## [1.5.0] – 2026-03-03
+
+### Bearbeitungslink auf Anfrage
+
+**Neue Features**
+- Direktes Bearbeiten von der Übersichtsseite entfernt – jeder bearbeitet nur noch über seinen persönlichen Link
+- Neuer Briefumschlag-Button neben jedem Eintrag: sendet auf Anfrage einen Bearbeitungslink per E-Mail
+- Bestätigungs-Modal vor dem Versand (mit Name und Ansprechpartner zur Kontrolle)
+- Die gesendete Mail enthält die aktuelle Anmeldungszusammenfassung (wie Bestätigung/Update-Mails)
+- Hinweis-Box auf der Übersichtsseite erklärt den neuen Ablauf
+
+---
+
 ## [1.4.1] – 2026-03-02
 
 ### Tägliches CSV-Backup & erweiterter Export

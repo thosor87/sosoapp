@@ -7,7 +7,7 @@ Web-App zur Planung und Organisation des jährlichen Sorings-Sommerfests mit ca.
 - **Magic-Link-Zugang** – Ein geteilter Link für alle Gäste (`party.soring.de/?token=...`)
 - **Mehrstufiges Anmeldeformular** – Familie, Essen (Kuchen/Salat), Zelten mit Duplikat-Erkennung
 - **E-Mail-Bestätigungen** – Anmeldebestätigung, Änderungs- und Löschungsbenachrichtigung via EmailJS
-- **Bearbeitungslink per E-Mail** – Direktlink zum Editieren der eigenen Anmeldung
+- **Bearbeitungslink per E-Mail** – Direktlink zum Editieren in jeder Mail; auf der Übersicht per Briefumschlag-Button neu anfordern
 - **Echtzeit-Übersicht** – Statistik-Karten, Anmeldungsliste, Essens- & Zelter-Listen mit Summen
 - **Admin-Dashboard** – Ankündigungen, Ablaufplan, Anmeldungsverwaltung, Event-Einstellungen
 - **Ablaufplan/Timeline** – Kategorien, Drag & Drop, öffentliche + interne Notizen
