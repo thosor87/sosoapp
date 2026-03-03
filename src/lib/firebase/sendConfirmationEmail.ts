@@ -134,9 +134,9 @@ export async function sendUpdateEmail(
   )
 }
 
-/** Sendet nur den Bearbeitungslink auf Anfrage */
+/** Sendet den Bearbeitungslink auf Anfrage inkl. aktueller Zusammenfassung */
 export async function sendEditLinkEmail(
-  registration: Pick<RegistrationSummary, 'id' | 'contactName' | 'email' | 'familyName'>,
+  registration: RegistrationSummary,
   accessToken: string
 ) {
   if (!registration.email?.trim()) return
@@ -146,7 +146,9 @@ export async function sendEditLinkEmail(
   const html = wrapHtml(`
   <p style="color: #a8a29e; margin-top: 0;">Dein Bearbeitungslink</p>
   <p>Hallo ${registration.contactName},</p>
-  <p>du hast einen Bearbeitungslink f&uuml;r deine Anmeldung angefragt. Hier kannst du sie bearbeiten oder zur&uuml;ckziehen:</p>
+  <p>du hast einen Bearbeitungslink f&uuml;r deine Anmeldung angefragt. Hier ist dein aktueller Stand:</p>
+  ${buildSummaryHtml(registration)}
+  <p>Hier kannst du &auml;ndern oder zur&uuml;ckziehen:</p>
   <p style="text-align: center; margin: 24px 0;">
     <a href="${editLink}" style="display: inline-block; background: #F97316; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Anmeldung bearbeiten</a>
   </p>

@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useAuthStore } from '@/features/auth/store'
 import { sendEditLinkEmail } from '@/lib/firebase/sendConfirmationEmail'
@@ -12,6 +13,7 @@ export function RegistrationList() {
   const isLoading = useRegistrationStore((s) => s.isLoading)
   const accessToken = useAuthStore((s) => s.accessToken)
   const [search, setSearch] = useState('')
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [sendingId, setSendingId] = useState<string | null>(null)
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
 
@@ -21,19 +23,24 @@ export function RegistrationList() {
       r.contactName.toLowerCase().includes(search.toLowerCase())
   )
 
-  async function handleRequestEditLink(regId: string) {
-    const reg = registrations.find((r) => r.id === regId)
-    if (!reg || !accessToken) return
+  const confirmingReg = confirmingId
+    ? registrations.find((r) => r.id === confirmingId)
+    : null
 
-    setSendingId(regId)
+  async function handleConfirmSend() {
+    if (!confirmingId || !accessToken) return
+    const reg = registrations.find((r) => r.id === confirmingId)
+    if (!reg) return
+
+    setConfirmingId(null)
+    setSendingId(confirmingId)
     try {
       await sendEditLinkEmail(reg, accessToken)
-      setSentIds((prev) => new Set(prev).add(regId))
-      // Reset sent indicator after 3s
+      setSentIds((prev) => new Set(prev).add(reg.id))
       setTimeout(() => {
         setSentIds((prev) => {
           const next = new Set(prev)
-          next.delete(regId)
+          next.delete(reg.id)
           return next
         })
       }, 3000)
@@ -62,7 +69,7 @@ export function RegistrationList() {
     return (
       <button
         type="button"
-        onClick={() => handleRequestEditLink(regId)}
+        onClick={() => setConfirmingId(regId)}
         disabled={isSending || isSent}
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-warm-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer disabled:cursor-default disabled:opacity-60"
         title={isSent ? 'Link gesendet!' : 'Bearbeitungslink per E-Mail senden'}
@@ -83,6 +90,7 @@ export function RegistrationList() {
   }
 
   return (
+    <>
     <Card className="overflow-hidden">
       <div className="p-4 md:p-6 border-b border-warm-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -234,5 +242,39 @@ export function RegistrationList() {
         </>
       )}
     </Card>
+
+    {/* Bestätigungs-Modal */}
+    <Modal
+      isOpen={!!confirmingReg}
+      onClose={() => setConfirmingId(null)}
+      title="Bearbeitungslink senden?"
+    >
+      {confirmingReg && (
+        <div>
+          <p className="text-warm-600 mb-6">
+            Ein Bearbeitungslink wird an die hinterlegte E-Mail-Adresse von{' '}
+            <strong className="text-warm-800">{confirmingReg.familyName}</strong>{' '}
+            ({confirmingReg.contactName}) geschickt.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmingId(null)}
+              className="px-4 py-2 rounded-lg text-warm-600 hover:bg-warm-100 transition-colors cursor-pointer"
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmSend}
+              className="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors cursor-pointer"
+            >
+              Link senden
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  </>
   )
 }
