@@ -31,7 +31,7 @@ export function OverviewPage() {
       </motion.h1>
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
         <p className="text-sm font-medium text-amber-800">
-          Bitte ändere nur deine eigene Anmeldung. Nutze dafür am besten den Link aus deiner Bestätigungsmail.
+          Möchtest du deine Anmeldung ändern? Nutze den Link aus deiner Bestätigungsmail – oder klicke auf das Briefumschlag-Symbol neben deinem Eintrag, um dir einen neuen Bearbeitungslink zuzuschicken.
         </p>
       </div>
 
