@@ -1,6 +1,4 @@
 import emailjs from '@emailjs/browser'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
 import { getAuditLogsForDate } from '@/lib/firebase/auditLog'
 import type { AuditLog } from '@/lib/firebase/types'
 
@@ -67,12 +65,10 @@ export async function checkAndSendDailyDigest(eventId: string, adminEmail?: stri
   if (!recipient || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return
 
   const today = todayKey()
-  const metaRef = doc(db, 'adminMeta', eventId)
+  const storageKey = `soso-digest-date-${eventId}`
 
   try {
-    const metaSnap = await getDoc(metaRef)
-    const lastDigestDate: string = metaSnap.data()?.lastDigestDate ?? ''
-
+    const lastDigestDate = localStorage.getItem(storageKey) ?? ''
     if (lastDigestDate === today) return // already sent today
 
     const todayLogs = await getAuditLogsForDate(eventId, new Date())
@@ -91,7 +87,7 @@ export async function checkAndSendDailyDigest(eventId: string, adminEmail?: stri
       EMAILJS_PUBLIC_KEY
     )
 
-    await setDoc(metaRef, { lastDigestDate: today }, { merge: true })
+    localStorage.setItem(storageKey, today)
   } catch (err) {
     console.error('Daily digest failed:', err)
   }
