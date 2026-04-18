@@ -31,15 +31,18 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
       # Firestore-Regeln deployen (nur auf main)
+      - name: Authenticate to Google Cloud
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - name: Deploy Firestore rules
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/firebase-sa.json
           npx --yes firebase-tools@latest deploy --only firestore:rules \
             --project ${{ secrets.VITE_FIREBASE_PROJECT_ID }} \
             --non-interactive
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-sa.json
 
       # Live-Deployment (nur auf main)
       - name: Deploy to live channel
