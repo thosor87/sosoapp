@@ -29,9 +29,7 @@ function FoodSection({
       </div>
       <div className="p-4">
         {items.length === 0 ? (
-          <p className="text-sm text-warm-400 text-center py-4 italic">
-            {emptyText}
-          </p>
+          <p className="text-sm text-warm-400 text-center py-4 italic">{emptyText}</p>
         ) : (
           <div className="space-y-2">
             {items.map((item, i) => (
@@ -44,12 +42,8 @@ function FoodSection({
               >
                 <span className="text-lg">{emoji}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-warm-700">
-                    {item.description}
-                  </p>
-                  <p className="text-xs text-warm-400">
-                    {item.familyName}
-                  </p>
+                  <p className="text-sm font-medium text-warm-700">{item.description}</p>
+                  <p className="text-xs text-warm-400">{item.familyName}</p>
                 </div>
               </motion.div>
             ))}
@@ -65,20 +59,20 @@ export function FoodOverview() {
 
   const cakes: FoodItem[] = registrations
     .filter((r) => r.food.bringsCake)
-    .map((r) => ({
-      familyName: r.familyName,
-      description: r.food.cakeDescription,
-    }))
+    .map((r) => ({ familyName: r.familyName, description: r.food.cakeDescription }))
 
   const salads: FoodItem[] = registrations
     .filter((r) => r.food.bringsSalad)
-    .map((r) => ({
-      familyName: r.familyName,
-      description: r.food.saladDescription,
-    }))
+    .map((r) => ({ familyName: r.familyName, description: r.food.saladDescription }))
+
+  const others: FoodItem[] = registrations
+    .filter((r) => r.food.bringsOther && r.food.otherDescription)
+    .map((r) => ({ familyName: r.familyName, description: r.food.otherDescription! }))
+
+  const hasOthers = others.length > 0 || registrations.some((r) => r.food.bringsOther !== undefined)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className={`grid grid-cols-1 gap-4 ${hasOthers ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
       <FoodSection
         title="Kuchen"
         emoji={'\uD83C\uDF82'}
@@ -93,6 +87,15 @@ export function FoodOverview() {
         emptyText="Noch keine Salate angemeldet"
         colorClass="bg-emerald-50/50"
       />
+      {hasOthers && (
+        <FoodSection
+          title="Sonstiges"
+          emoji="🍞"
+          items={others}
+          emptyText="Noch nichts Sonstiges angemeldet"
+          colorClass="bg-violet-50/50"
+        />
+      )}
     </div>
   )
 }

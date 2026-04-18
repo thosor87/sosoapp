@@ -64,6 +64,23 @@ service cloud.firestore {
                             && request.resource.data.name.size() <= 200;
       allow delete: if true;
     }
+    // ── Audit-Logs ──────────────────────────────────────────
+    // Lesen: alle (für Admin-Ansicht) | Erstellen: mit Pflichtfeldern
+    // Ändern/Löschen: nicht erlaubt (unveränderliches Protokoll)
+    match /auditLogs/{logId} {
+      allow read: if true;
+      allow create: if request.resource.data.eventId is string
+                    && request.resource.data.action is string
+                    && request.resource.data.familyName is string
+                    && request.resource.data.entityType is string;
+      allow update, delete: if false;
+    }
+
+    // ── Admin-Meta (tägl. Digest-Status) ────────────────────
+    match /adminMeta/{metaId} {
+      allow read, write: if true;
+    }
+
     // ── Alles andere: gesperrt ──────────────────────────────
     match /{document=**} {
       allow read, write: if false;

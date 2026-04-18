@@ -7,10 +7,13 @@ import { cn } from '@/lib/utils/cn'
 import { AnnouncementEditor } from './AnnouncementEditor'
 import { RegistrationManager } from './RegistrationManager'
 import { EventSettings } from './EventSettings'
+import { AuditLogViewer } from './AuditLogViewer'
+import { GoogleDriveBackup } from './GoogleDriveBackup'
 import { TimelineEditor } from '@/features/timeline/components/TimelineEditor'
 import { MapEditor } from '@/features/map/components/MapEditor'
+import { checkAndSendDailyDigest } from '@/lib/firebase/dailyDigest'
 
-type TabId = 'announcements' | 'registrations' | 'timeline' | 'map' | 'settings'
+type TabId = 'announcements' | 'registrations' | 'timeline' | 'map' | 'auditlog' | 'backup' | 'settings'
 
 interface Tab {
   id: TabId
@@ -23,6 +26,8 @@ const TABS: Tab[] = [
   { id: 'registrations', label: 'Anmeldungen', icon: '\uD83D\uDC65' },
   { id: 'timeline', label: 'Ablaufplan', icon: '\u23F0' },
   { id: 'map', label: 'Karte', icon: '\uD83D\uDDFA\uFE0F' },
+  { id: 'auditlog', label: 'Protokoll', icon: '\uD83D\uDCCB' },
+  { id: 'backup', label: 'Backup', icon: '\u2601\uFE0F' },
   { id: 'settings', label: 'Einstellungen', icon: '\u2699\uFE0F' },
 ]
 
@@ -30,30 +35,26 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabId>('announcements')
   const eventId = useAuthStore((s) => s.eventId)
   const logoutAdmin = useAuthStore((s) => s.logoutAdmin)
-  const subscribeToRegistrations = useRegistrationStore(
-    (s) => s.subscribeToRegistrations
-  )
+  const subscribeToRegistrations = useRegistrationStore((s) => s.subscribeToRegistrations)
 
   useEffect(() => {
     if (!eventId) return
     const unsubscribe = subscribeToRegistrations(eventId)
+    // Trigger daily digest check when admin opens dashboard
+    checkAndSendDailyDigest(eventId).catch(() => {})
     return () => unsubscribe()
   }, [eventId, subscribeToRegistrations])
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'announcements':
-        return <AnnouncementEditor />
-      case 'registrations':
-        return <RegistrationManager />
-      case 'timeline':
-        return <TimelineEditor />
-      case 'map':
-        return <MapEditor />
-      case 'settings':
-        return <EventSettings />
-      default:
-        return null
+      case 'announcements': return <AnnouncementEditor />
+      case 'registrations': return <RegistrationManager />
+      case 'timeline': return <TimelineEditor />
+      case 'map': return <MapEditor />
+      case 'auditlog': return <AuditLogViewer />
+      case 'backup': return <GoogleDriveBackup />
+      case 'settings': return <EventSettings />
+      default: return null
     }
   }
 
@@ -142,12 +143,7 @@ export function AdminDashboard() {
 
         {/* Mobile logout button */}
         <div className="md:hidden mt-8 pt-4 border-t border-warm-100">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={logoutAdmin}
-            className="text-warm-400 hover:text-red-600"
-          >
+          <Button variant="ghost" size="sm" onClick={logoutAdmin} className="text-warm-400 hover:text-red-600">
             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>

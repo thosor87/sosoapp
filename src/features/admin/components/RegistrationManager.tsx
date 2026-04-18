@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { deleteDoc, doc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
@@ -10,6 +10,8 @@ import { Modal } from '@/components/ui/Modal'
 import { RegistrationForm } from '@/features/registration/components/RegistrationForm'
 import type { Registration } from '@/lib/firebase/types'
 
+const LAST_VISIT_KEY = 'soso-admin-last-registrations-visit'
+
 export function RegistrationManager() {
   const registrations = useRegistrationStore((s) => s.registrations)
   const addToast = useToastStore((s) => s.addToast)
@@ -18,6 +20,23 @@ export function RegistrationManager() {
   const [editReg, setEditReg] = useState<Registration | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // "New" indicator: registrations created after last visit
+  const lastVisitRef = useRef<number>(
+    parseInt(localStorage.getItem(LAST_VISIT_KEY) ?? '0', 10)
+  )
+  useEffect(() => {
+    // Update timestamp after a short delay so current-session "new" items still show
+    const timer = setTimeout(() => {
+      localStorage.setItem(LAST_VISIT_KEY, Date.now().toString())
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const isNew = (reg: Registration) => {
+    const ts = reg.createdAt?.seconds
+    return ts ? ts * 1000 > lastVisitRef.current : false
+  }
 
   const filtered = useMemo(() => {
     if (!search.trim()) return registrations
@@ -34,6 +53,7 @@ export function RegistrationManager() {
     const totalChildren = registrations.reduce((s, r) => s + r.childrenCount, 0)
     const totalCake = registrations.filter((r) => r.food.bringsCake).length
     const totalSalad = registrations.filter((r) => r.food.bringsSalad).length
+    const totalOther = registrations.filter((r) => r.food.bringsOther).length
     const totalCamping = registrations.filter((r) => r.camping.wantsCamping).length
     return {
       families: registrations.length,
@@ -42,6 +62,7 @@ export function RegistrationManager() {
       total: totalAdults + totalChildren,
       cake: totalCake,
       salad: totalSalad,
+      other: totalOther,
       camping: totalCamping,
     }
   }, [registrations])
@@ -72,6 +93,8 @@ export function RegistrationManager() {
       'Kuchen-Beschreibung',
       'Salat',
       'Salat-Beschreibung',
+      'Sonstiges',
+      'Sonstiges-Beschreibung',
       'Zelten',
       'Zelte',
       'Zelten-Notizen',
@@ -96,6 +119,8 @@ export function RegistrationManager() {
       r.food.cakeDescription,
       r.food.bringsSalad ? 'Ja' : 'Nein',
       r.food.saladDescription,
+      r.food.bringsOther ? 'Ja' : 'Nein',
+      r.food.otherDescription ?? '',
       r.camping.wantsCamping ? 'Ja' : 'Nein',
       r.camping.tentCount,
       r.camping.notes,
@@ -111,9 +136,7 @@ export function RegistrationManager() {
       ),
     ].join('\n')
 
-    const blob = new Blob(['\uFEFF' + csvContent], {
-      type: 'text/csv;charset=utf-8;',
-    })
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -153,6 +176,7 @@ export function RegistrationManager() {
               <th className="px-4 py-3 text-center font-medium text-warm-600">Gesamt</th>
               <th className="px-4 py-3 text-center font-medium text-warm-600 hidden lg:table-cell">Kuchen</th>
               <th className="px-4 py-3 text-center font-medium text-warm-600 hidden lg:table-cell">Salat</th>
+              <th className="px-4 py-3 text-center font-medium text-warm-600 hidden lg:table-cell">Sonst.</th>
               <th className="px-4 py-3 text-center font-medium text-warm-600 hidden lg:table-cell">Zelten</th>
               <th className="px-4 py-3 text-right font-medium text-warm-600">Aktionen</th>
             </tr>
@@ -160,7 +184,7 @@ export function RegistrationManager() {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-warm-400">
+                <td colSpan={10} className="px-4 py-8 text-center text-warm-400">
                   {search ? 'Keine Ergebnisse gefunden.' : 'Noch keine Anmeldungen vorhanden.'}
                 </td>
               </tr>
@@ -172,40 +196,30 @@ export function RegistrationManager() {
                   className="border-b border-warm-50 hover:bg-warm-50/50 transition-colors"
                 >
                   <td className="px-4 py-3 font-medium text-warm-800">
-                    {reg.familyName}
+                    <div className="flex items-center gap-2">
+                      {reg.familyName}
+                      {isNew(reg) && (
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 shrink-0">
+                          Neu
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-warm-600 hidden sm:table-cell">
-                    {reg.contactName}
-                  </td>
-                  <td className="px-4 py-3 text-center text-warm-600 hidden md:table-cell">
-                    {reg.adultsCount}
-                  </td>
-                  <td className="px-4 py-3 text-center text-warm-600 hidden md:table-cell">
-                    {reg.childrenCount}
-                  </td>
-                  <td className="px-4 py-3 text-center font-medium text-warm-800">
-                    {reg.adultsCount + reg.childrenCount}
+                  <td className="px-4 py-3 text-warm-600 hidden sm:table-cell">{reg.contactName}</td>
+                  <td className="px-4 py-3 text-center text-warm-600 hidden md:table-cell">{reg.adultsCount}</td>
+                  <td className="px-4 py-3 text-center text-warm-600 hidden md:table-cell">{reg.childrenCount}</td>
+                  <td className="px-4 py-3 text-center font-medium text-warm-800">{reg.adultsCount + reg.childrenCount}</td>
+                  <td className="px-4 py-3 text-center hidden lg:table-cell">
+                    {reg.food.bringsCake ? <span title={reg.food.cakeDescription}>{'\uD83C\uDF70'}</span> : <span className="text-warm-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center hidden lg:table-cell">
-                    {reg.food.bringsCake ? (
-                      <span title={reg.food.cakeDescription}>{'\uD83C\uDF70'}</span>
-                    ) : (
-                      <span className="text-warm-300">-</span>
-                    )}
+                    {reg.food.bringsSalad ? <span title={reg.food.saladDescription}>{'\uD83E\uDD57'}</span> : <span className="text-warm-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center hidden lg:table-cell">
-                    {reg.food.bringsSalad ? (
-                      <span title={reg.food.saladDescription}>{'\uD83E\uDD57'}</span>
-                    ) : (
-                      <span className="text-warm-300">-</span>
-                    )}
+                    {reg.food.bringsOther ? <span title={reg.food.otherDescription}>🍞</span> : <span className="text-warm-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center hidden lg:table-cell">
-                    {reg.camping.wantsCamping ? (
-                      <span title={`${reg.camping.tentCount} Zelt(e)`}>{'\u26FA'}</span>
-                    ) : (
-                      <span className="text-warm-300">-</span>
-                    )}
+                    {reg.camping.wantsCamping ? <span title={`${reg.camping.tentCount} Zelt(e)`}>{'\u26FA'}</span> : <span className="text-warm-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -221,21 +235,8 @@ export function RegistrationManager() {
                       </button>
                       {deleteConfirmId === reg.id ? (
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(reg.id)}
-                            disabled={isDeleting}
-                            className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 cursor-pointer transition-colors text-xs font-medium"
-                          >
-                            Ja
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteConfirmId(null)}
-                            className="p-1.5 rounded-lg text-warm-400 hover:bg-warm-100 cursor-pointer transition-colors text-xs font-medium"
-                          >
-                            Nein
-                          </button>
+                          <button type="button" onClick={() => handleDelete(reg.id)} disabled={isDeleting} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 cursor-pointer transition-colors text-xs font-medium">Ja</button>
+                          <button type="button" onClick={() => setDeleteConfirmId(null)} className="p-1.5 rounded-lg text-warm-400 hover:bg-warm-100 cursor-pointer transition-colors text-xs font-medium">Nein</button>
                         </div>
                       ) : (
                         <button
@@ -260,7 +261,7 @@ export function RegistrationManager() {
 
       {/* Stats row */}
       <div className="rounded-xl border border-warm-100 bg-warm-50 p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
           <div>
             <p className="text-xs text-warm-500">Familien</p>
             <p className="text-lg font-bold text-warm-800">{stats.families}</p>
@@ -284,6 +285,10 @@ export function RegistrationManager() {
           <div>
             <p className="text-xs text-warm-500">Salat</p>
             <p className="text-lg font-bold text-warm-800">{stats.salad}</p>
+          </div>
+          <div>
+            <p className="text-xs text-warm-500">Sonstiges</p>
+            <p className="text-lg font-bold text-warm-800">{stats.other}</p>
           </div>
           <div>
             <p className="text-xs text-warm-500">Zelten</p>
