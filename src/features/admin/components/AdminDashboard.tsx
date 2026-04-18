@@ -34,6 +34,7 @@ const TABS: Tab[] = [
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabId>('announcements')
   const eventId = useAuthStore((s) => s.eventId)
+  const eventConfig = useAuthStore((s) => s.eventConfig)
   const logoutAdmin = useAuthStore((s) => s.logoutAdmin)
   const subscribeToRegistrations = useRegistrationStore((s) => s.subscribeToRegistrations)
 
@@ -41,7 +42,7 @@ export function AdminDashboard() {
     if (!eventId) return
     const unsubscribe = subscribeToRegistrations(eventId)
     // Trigger daily digest check when admin opens dashboard
-    checkAndSendDailyDigest(eventId).catch(() => {})
+    checkAndSendDailyDigest(eventId, eventConfig?.adminEmail).catch(() => {})
     return () => unsubscribe()
   }, [eventId, subscribeToRegistrations])
 

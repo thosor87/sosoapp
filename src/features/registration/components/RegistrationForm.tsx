@@ -7,7 +7,7 @@ import { Toggle } from '@/components/ui/Toggle'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { useAuthStore } from '@/features/auth/store'
-import { useRegistrationStore, FOOD_LIMIT } from '@/features/registration/store'
+import { useRegistrationStore, FOOD_LIMIT_DEFAULT } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { validateStep1, validateStep2, validateStep3 } from '@/features/registration/validation'
 import { NumberStepper } from './NumberStepper'
@@ -96,6 +96,7 @@ function getInitialData(reg?: Registration): FormData {
 export function RegistrationForm({ editRegistration, onClose }: RegistrationFormProps) {
   const eventId = useAuthStore((s) => s.eventId)
   const accessToken = useAuthStore((s) => s.accessToken)
+  const FOOD_LIMIT = useAuthStore((s) => s.eventConfig?.foodLimit ?? FOOD_LIMIT_DEFAULT)
   const createRegistration = useRegistrationStore((s) => s.createRegistration)
   const updateRegistration = useRegistrationStore((s) => s.updateRegistration)
   const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)

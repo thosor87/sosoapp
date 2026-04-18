@@ -7,7 +7,6 @@ import type { AuditLog } from '@/lib/firebase/types'
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10)
@@ -63,8 +62,9 @@ function buildDigestHtml(logs: AuditLog[], date: Date): string {
 </div>`
 }
 
-export async function checkAndSendDailyDigest(eventId: string): Promise<void> {
-  if (!ADMIN_EMAIL || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return
+export async function checkAndSendDailyDigest(eventId: string, adminEmail?: string): Promise<void> {
+  const recipient = adminEmail?.trim() || import.meta.env.VITE_ADMIN_EMAIL
+  if (!recipient || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return
 
   const today = todayKey()
   const metaRef = doc(db, 'adminMeta', eventId)
@@ -84,7 +84,7 @@ export async function checkAndSendDailyDigest(eventId: string): Promise<void> {
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
       {
-        to_email: ADMIN_EMAIL,
+        to_email: recipient,
         subject: `Sorings Sommerfest – Tagesrückblick ${today}`,
         message_html: html,
       },

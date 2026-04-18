@@ -8,6 +8,8 @@ export interface EventConfig {
   location: string
   accessToken: string
   adminPasswordHash: string
+  adminEmail?: string
+  foodLimit?: number
   announcements: Announcement[]
   isRegistrationOpen: boolean
   timelineNotesTop?: string
