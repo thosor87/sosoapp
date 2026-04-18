@@ -17,7 +17,9 @@ export function EventSettings() {
   const [location, setLocation] = useState('')
   const [accessToken, setAccessToken] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
-  const [foodLimit, setFoodLimit] = useState(15)
+  const [cakeLimit, setCakeLimit] = useState(15)
+  const [saladLimit, setSaladLimit] = useState(15)
+  const [otherLimit, setOtherLimit] = useState(15)
   const [newPassword, setNewPassword] = useState('')
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -29,7 +31,9 @@ export function EventSettings() {
     setLocation(eventConfig.location || '')
     setAccessToken(eventConfig.accessToken || '')
     setAdminEmail(eventConfig.adminEmail || '')
-    setFoodLimit(eventConfig.foodLimit ?? 15)
+    setCakeLimit(eventConfig.cakeLimit ?? 15)
+    setSaladLimit(eventConfig.saladLimit ?? 15)
+    setOtherLimit(eventConfig.otherLimit ?? 15)
     setIsRegistrationOpen(eventConfig.isRegistrationOpen ?? true)
 
     // Convert Timestamp to date string for the date input
@@ -51,13 +55,14 @@ export function EventSettings() {
     setIsSaving(true)
     try {
       const docRef = doc(db, 'events', eventId)
-      const parsedLimit = Math.max(1, Math.min(100, parseInt(String(foodLimit), 10) || 15))
       const updateData: Record<string, unknown> = {
         title,
         location,
         accessToken,
         adminEmail: adminEmail.trim(),
-        foodLimit: parsedLimit,
+        cakeLimit: Math.max(1, Math.min(100, parseInt(String(cakeLimit), 10) || 15)),
+        saladLimit: Math.max(1, Math.min(100, parseInt(String(saladLimit), 10) || 15)),
+        otherLimit: Math.max(1, Math.min(100, parseInt(String(otherLimit), 10) || 15)),
         isRegistrationOpen,
         updatedAt: serverTimestamp(),
       }
@@ -173,17 +178,38 @@ export function EventSettings() {
           </p>
         </div>
 
-        <div>
-          <Input
-            label="Speisekontingent (max. pro Kategorie)"
-            type="number"
-            value={String(foodLimit)}
-            onChange={(e) => setFoodLimit(parseInt(e.target.value, 10) || 15)}
-            placeholder="15"
-          />
-          <p className="text-xs text-warm-400 mt-1">
-            Maximale Anzahl an Kuchen und Salaten. Standard: 15.
-          </p>
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-warm-700">Speisekontingent (max. Anmeldungen)</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Input
+                label="🎂 Kuchen"
+                type="number"
+                value={String(cakeLimit)}
+                onChange={(e) => setCakeLimit(parseInt(e.target.value, 10) || 15)}
+                placeholder="15"
+              />
+            </div>
+            <div>
+              <Input
+                label="🥗 Salat"
+                type="number"
+                value={String(saladLimit)}
+                onChange={(e) => setSaladLimit(parseInt(e.target.value, 10) || 15)}
+                placeholder="15"
+              />
+            </div>
+            <div>
+              <Input
+                label="🍞 Sonstiges"
+                type="number"
+                value={String(otherLimit)}
+                onChange={(e) => setOtherLimit(parseInt(e.target.value, 10) || 15)}
+                placeholder="15"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-warm-400">Standard je Kategorie: 15. Bei 0 = kein Limit.</p>
         </div>
 
         <Toggle

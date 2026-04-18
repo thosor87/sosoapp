@@ -96,7 +96,8 @@ function getInitialData(reg?: Registration): FormData {
 export function RegistrationForm({ editRegistration, onClose }: RegistrationFormProps) {
   const eventId = useAuthStore((s) => s.eventId)
   const accessToken = useAuthStore((s) => s.accessToken)
-  const FOOD_LIMIT = useAuthStore((s) => s.eventConfig?.foodLimit ?? FOOD_LIMIT_DEFAULT)
+  const cakeLimit = useAuthStore((s) => s.eventConfig?.cakeLimit ?? FOOD_LIMIT_DEFAULT)
+  const saladLimit = useAuthStore((s) => s.eventConfig?.saladLimit ?? FOOD_LIMIT_DEFAULT)
   const createRegistration = useRegistrationStore((s) => s.createRegistration)
   const updateRegistration = useRegistrationStore((s) => s.updateRegistration)
   const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)
@@ -125,17 +126,17 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     }
   }, [registrations, editRegistration])
 
-  const cakeLimitReached = foodCounts.cakes >= FOOD_LIMIT
-  const saladLimitReached = foodCounts.salads >= FOOD_LIMIT
+  const cakeLimitReached = foodCounts.cakes >= cakeLimit
+  const saladLimitReached = foodCounts.salads >= saladLimit
 
-  // Smart food hint
+  // Smart food hint – only when clearly imbalanced (one side ≥ 2× the other, min. 4 of the bigger)
   const foodHint = useMemo(() => {
     const { cakes, salads } = foodCounts
-    if (salads >= 8 && cakes < 5) {
-      return { emoji: '\uD83C\uDF82', text: `Kuchen wäre super! Es gibt schon ${salads} Salate, aber erst ${cakes} Kuchen.` }
+    if (cakes >= 4 && cakes >= salads * 2) {
+      return { emoji: '\uD83E\uDD57', text: `Salat wäre prima! Es gibt schon ${cakes} Kuchen, aber erst ${salads} Salat${salads === 1 ? '' : 'e'}.` }
     }
-    if (cakes >= 8 && salads < 5) {
-      return { emoji: '\uD83E\uDD57', text: `Salat wäre toll! Es gibt schon ${cakes} Kuchen, aber erst ${salads} Salate.` }
+    if (salads >= 4 && salads >= cakes * 2) {
+      return { emoji: '\uD83C\uDF82', text: `Kuchen wäre super! Es gibt schon ${salads} Salate, aber erst ${cakes} Kuchen.` }
     }
     return null
   }, [foodCounts])
@@ -148,10 +149,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     const salads = base
       .filter((r) => r.food.bringsSalad && r.food.saladDescription)
       .map((r) => ({ family: r.familyName, description: r.food.saladDescription }))
-    const others = base
-      .filter((r) => r.food.bringsOther && r.food.otherDescription)
-      .map((r) => ({ family: r.familyName, description: r.food.otherDescription! }))
-    return { cakes, salads, others }
+    return { cakes, salads }
   }, [registrations, editRegistration])
 
   const cakeDuplicateHint = useMemo(() => {
@@ -458,7 +456,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   {cakeLimitReached && !formData.food.bringsCake ? (
                     <div className="flex items-center gap-2 text-sm text-red-600">
                       <span>🎂</span>
-                      <span>Kuchen-Kontingent voll ({FOOD_LIMIT}/{FOOD_LIMIT}) – danke an alle!</span>
+                      <span>Kuchen-Kontingent voll ({cakeLimit}/{cakeLimit}) – danke an alle!</span>
                     </div>
                   ) : (
                     <Toggle
@@ -480,18 +478,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  {existingFood.cakes.length > 0 && (
-                    <div className="pt-1">
-                      <p className="text-xs text-warm-400 mb-1.5">Bereits gemeldet ({existingFood.cakes.length}/{FOOD_LIMIT}):</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {existingFood.cakes.map((c, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100">
-                            {c.description} <span className="text-warm-300">({c.family})</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Salat */}
@@ -499,7 +485,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   {saladLimitReached && !formData.food.bringsSalad ? (
                     <div className="flex items-center gap-2 text-sm text-red-600">
                       <span>🥗</span>
-                      <span>Salat-Kontingent voll ({FOOD_LIMIT}/{FOOD_LIMIT}) – danke an alle!</span>
+                      <span>Salat-Kontingent voll ({saladLimit}/{saladLimit}) – danke an alle!</span>
                     </div>
                   ) : (
                     <Toggle
@@ -521,18 +507,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  {existingFood.salads.length > 0 && (
-                    <div className="pt-1">
-                      <p className="text-xs text-warm-400 mb-1.5">Bereits gemeldet ({existingFood.salads.length}/{FOOD_LIMIT}):</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {existingFood.salads.map((s, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100">
-                            {s.description} <span className="text-warm-300">({s.family})</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Sonstiges */}
@@ -552,18 +526,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  {existingFood.others.length > 0 && (
-                    <div className="pt-1">
-                      <p className="text-xs text-warm-400 mb-1.5">Bereits gemeldet:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {existingFood.others.map((o, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100">
-                            {o.description} <span className="text-warm-300">({o.family})</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </motion.div>

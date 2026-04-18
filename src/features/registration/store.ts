@@ -18,8 +18,11 @@ import { useAuthStore } from '@/features/auth/store'
 
 export const FOOD_LIMIT_DEFAULT = 15
 
-function getFoodLimit(): number {
-  return useAuthStore.getState().eventConfig?.foodLimit ?? FOOD_LIMIT_DEFAULT
+function getCakeLimit(): number {
+  return useAuthStore.getState().eventConfig?.cakeLimit ?? FOOD_LIMIT_DEFAULT
+}
+function getSaladLimit(): number {
+  return useAuthStore.getState().eventConfig?.saladLimit ?? FOOD_LIMIT_DEFAULT
 }
 
 interface RegistrationState {
@@ -76,15 +79,16 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
 
   createRegistration: async (data, performedBy = 'user') => {
     const current = get().registrations
-    const limit = getFoodLimit()
+    const cakeLimit = getCakeLimit()
+    const saladLimit = getSaladLimit()
     const cakeCount = current.filter((r) => r.food.bringsCake).length
     const saladCount = current.filter((r) => r.food.bringsSalad).length
 
-    if (data.food.bringsCake && cakeCount >= limit) {
-      throw new Error(`Das Kuchen-Kontingent ist leider voll (${limit}/${limit}).`)
+    if (data.food.bringsCake && cakeCount >= cakeLimit) {
+      throw new Error(`Das Kuchen-Kontingent ist leider voll (${cakeLimit}/${cakeLimit}).`)
     }
-    if (data.food.bringsSalad && saladCount >= limit) {
-      throw new Error(`Das Salat-Kontingent ist leider voll (${limit}/${limit}).`)
+    if (data.food.bringsSalad && saladCount >= saladLimit) {
+      throw new Error(`Das Salat-Kontingent ist leider voll (${saladLimit}/${saladLimit}).`)
     }
 
     const docRef = await addDoc(collection(db, 'registrations'), {
@@ -109,17 +113,18 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     const existing = get().registrations.find((r) => r.id === id)
     const current = get().registrations
 
-    const limit = getFoodLimit()
+    const cakeLimit = getCakeLimit()
+    const saladLimit = getSaladLimit()
     if (data.food?.bringsCake && !existing?.food.bringsCake) {
       const cakeCount = current.filter((r) => r.food.bringsCake && r.id !== id).length
-      if (cakeCount >= limit) {
-        throw new Error(`Das Kuchen-Kontingent ist leider voll (${limit}/${limit}).`)
+      if (cakeCount >= cakeLimit) {
+        throw new Error(`Das Kuchen-Kontingent ist leider voll (${cakeLimit}/${cakeLimit}).`)
       }
     }
     if (data.food?.bringsSalad && !existing?.food.bringsSalad) {
       const saladCount = current.filter((r) => r.food.bringsSalad && r.id !== id).length
-      if (saladCount >= limit) {
-        throw new Error(`Das Salat-Kontingent ist leider voll (${limit}/${limit}).`)
+      if (saladCount >= saladLimit) {
+        throw new Error(`Das Salat-Kontingent ist leider voll (${saladLimit}/${saladLimit}).`)
       }
     }
 

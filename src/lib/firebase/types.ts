@@ -9,7 +9,9 @@ export interface EventConfig {
   accessToken: string
   adminPasswordHash: string
   adminEmail?: string
-  foodLimit?: number
+  cakeLimit?: number
+  saladLimit?: number
+  otherLimit?: number
   announcements: Announcement[]
   isRegistrationOpen: boolean
   timelineNotesTop?: string
