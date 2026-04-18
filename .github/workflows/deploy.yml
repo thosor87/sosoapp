@@ -35,9 +35,11 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/firebase-sa.json
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-sa.json \
-            npx --yes firebase-tools@latest deploy --only firestore:rules \
-            --project ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          npx --yes firebase-tools@latest deploy --only firestore:rules \
+            --project ${{ secrets.VITE_FIREBASE_PROJECT_ID }} \
+            --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-sa.json
 
       # Live-Deployment (nur auf main)
       - name: Deploy to live channel

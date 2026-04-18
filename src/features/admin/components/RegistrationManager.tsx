@@ -1,7 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
-import { deleteDoc, doc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { Button } from '@/components/ui/Button'
@@ -14,6 +12,7 @@ const LAST_VISIT_KEY = 'soso-admin-last-registrations-visit'
 
 export function RegistrationManager() {
   const registrations = useRegistrationStore((s) => s.registrations)
+  const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)
   const addToast = useToastStore((s) => s.addToast)
 
   const [search, setSearch] = useState('')
@@ -70,8 +69,7 @@ export function RegistrationManager() {
   const handleDelete = async (id: string) => {
     setIsDeleting(true)
     try {
-      await deleteDoc(doc(db, 'registrations', id))
-      addToast('Anmeldung gelöscht', 'success')
+      await deleteRegistration(id, 'admin')
       setDeleteConfirmId(null)
     } catch (error) {
       console.error('Error deleting registration:', error)
