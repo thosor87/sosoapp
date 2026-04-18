@@ -30,6 +30,15 @@ jobs:
           VITE_ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
+      # Firestore-Regeln deployen (nur auf main)
+      - name: Deploy Firestore rules
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/firebase-sa.json
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-sa.json \
+            npx --yes firebase-tools@latest deploy --only firestore:rules \
+            --project ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+
       # Live-Deployment (nur auf main)
       - name: Deploy to live channel
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

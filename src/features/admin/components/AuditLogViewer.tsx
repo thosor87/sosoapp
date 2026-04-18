@@ -26,7 +26,8 @@ export function AuditLogViewer() {
   const eventId = useAuthStore((s) => s.eventId)
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'today'>('today')
+  const [filter, setFilter] = useState<'all' | 'today'>('all')
+  const [loadCount, setLoadCount] = useState(0)
 
   useEffect(() => {
     if (!eventId) return
@@ -35,7 +36,9 @@ export function AuditLogViewer() {
       .then(setLogs)
       .catch((err) => console.error('Failed to load audit logs:', err))
       .finally(() => setIsLoading(false))
-  }, [eventId])
+  }, [eventId, loadCount])
+
+  const refresh = () => setLoadCount((n) => n + 1)
 
   const today = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
 
@@ -69,6 +72,15 @@ export function AuditLogViewer() {
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${filter === 'all' ? 'bg-primary-500 text-white' : 'bg-warm-100 text-warm-600 hover:bg-warm-200'}`}
           >
             Alle
+          </button>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={isLoading}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer bg-warm-100 text-warm-600 hover:bg-warm-200 disabled:opacity-50"
+            title="Aktualisieren"
+          >
+            {isLoading ? '…' : '↻'}
           </button>
         </div>
       </div>
