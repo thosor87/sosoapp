@@ -7,7 +7,7 @@ import { Toggle } from '@/components/ui/Toggle'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { useAuthStore } from '@/features/auth/store'
-import { useRegistrationStore } from '@/features/registration/store'
+import { useRegistrationStore, FOOD_LIMIT_DEFAULT } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { validateStep1, validateStep2, validateStep3 } from '@/features/registration/validation'
 import { NumberStepper } from './NumberStepper'
@@ -30,6 +30,8 @@ interface FormData {
     cakeDescription: string
     bringsSalad: boolean
     saladDescription: string
+    bringsOther: boolean
+    otherDescription: string
   }
   camping: {
     wantsCamping: boolean
@@ -55,7 +57,14 @@ function getInitialData(reg?: Registration): FormData {
       email: reg.email ?? '',
       adultsCount: reg.adultsCount,
       childrenCount: reg.childrenCount,
-      food: { ...reg.food },
+      food: {
+        bringsCake: reg.food.bringsCake,
+        cakeDescription: reg.food.cakeDescription,
+        bringsSalad: reg.food.bringsSalad,
+        saladDescription: reg.food.saladDescription,
+        bringsOther: reg.food.bringsOther ?? false,
+        otherDescription: reg.food.otherDescription ?? '',
+      },
       camping: { ...reg.camping, personCount: reg.camping.personCount ?? 0 },
       comments: reg.comments,
     }
@@ -71,6 +80,8 @@ function getInitialData(reg?: Registration): FormData {
       cakeDescription: '',
       bringsSalad: false,
       saladDescription: '',
+      bringsOther: false,
+      otherDescription: '',
     },
     camping: {
       wantsCamping: false,
@@ -85,6 +96,7 @@ function getInitialData(reg?: Registration): FormData {
 export function RegistrationForm({ editRegistration, onClose }: RegistrationFormProps) {
   const eventId = useAuthStore((s) => s.eventId)
   const accessToken = useAuthStore((s) => s.accessToken)
+  const FOOD_LIMIT = useAuthStore((s) => s.eventConfig?.foodLimit ?? FOOD_LIMIT_DEFAULT)
   const createRegistration = useRegistrationStore((s) => s.createRegistration)
   const updateRegistration = useRegistrationStore((s) => s.updateRegistration)
   const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)
@@ -104,16 +116,42 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const isEditing = !!editRegistration
 
+  // Food counts (excluding current edit)
+  const foodCounts = useMemo(() => {
+    const others = registrations.filter((r) => !editRegistration || r.id !== editRegistration.id)
+    return {
+      cakes: others.filter((r) => r.food.bringsCake).length,
+      salads: others.filter((r) => r.food.bringsSalad).length,
+    }
+  }, [registrations, editRegistration])
+
+  const cakeLimitReached = foodCounts.cakes >= FOOD_LIMIT
+  const saladLimitReached = foodCounts.salads >= FOOD_LIMIT
+
+  // Smart food hint
+  const foodHint = useMemo(() => {
+    const { cakes, salads } = foodCounts
+    if (salads >= 8 && cakes < 5) {
+      return { emoji: '\uD83C\uDF82', text: `Kuchen wäre super! Es gibt schon ${salads} Salate, aber erst ${cakes} Kuchen.` }
+    }
+    if (cakes >= 8 && salads < 5) {
+      return { emoji: '\uD83E\uDD57', text: `Salat wäre toll! Es gibt schon ${cakes} Kuchen, aber erst ${salads} Salate.` }
+    }
+    return null
+  }, [foodCounts])
+
   const existingFood = useMemo(() => {
-    const cakes = registrations
+    const base = registrations.filter((r) => !editRegistration || r.id !== editRegistration.id)
+    const cakes = base
       .filter((r) => r.food.bringsCake && r.food.cakeDescription)
-      .filter((r) => !editRegistration || r.id !== editRegistration.id)
       .map((r) => ({ family: r.familyName, description: r.food.cakeDescription }))
-    const salads = registrations
+    const salads = base
       .filter((r) => r.food.bringsSalad && r.food.saladDescription)
-      .filter((r) => !editRegistration || r.id !== editRegistration.id)
       .map((r) => ({ family: r.familyName, description: r.food.saladDescription }))
-    return { cakes, salads }
+    const others = base
+      .filter((r) => r.food.bringsOther && r.food.otherDescription)
+      .map((r) => ({ family: r.familyName, description: r.food.otherDescription! }))
+    return { cakes, salads, others }
   }, [registrations, editRegistration])
 
   const cakeDuplicateHint = useMemo(() => {
@@ -124,8 +162,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       input.includes(c.description.toLowerCase().trim())
     )
     if (matches.length === 0) return null
-    const names = matches.map((m) => `„${m.description}" (${m.family})`).join(', ')
-    return `Kommt schon von: ${names}`
+    return `Kommt schon von: ${matches.map((m) => `„${m.description}" (${m.family})`).join(', ')}`
   }, [formData.food.cakeDescription, existingFood.cakes])
 
   const saladDuplicateHint = useMemo(() => {
@@ -136,8 +173,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       input.includes(s.description.toLowerCase().trim())
     )
     if (matches.length === 0) return null
-    const names = matches.map((m) => `„${m.description}" (${m.family})`).join(', ')
-    return `Kommt schon von: ${names}`
+    return `Kommt schon von: ${matches.map((m) => `„${m.description}" (${m.family})`).join(', ')}`
   }, [formData.food.saladDescription, existingFood.salads])
 
   const updateField = useCallback(
@@ -149,10 +185,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   )
 
   const updateFood = useCallback(
-    <K extends keyof FormData['food']>(
-      field: K,
-      value: FormData['food'][K]
-    ) => {
+    <K extends keyof FormData['food']>(field: K, value: FormData['food'][K]) => {
       setFormData((prev) => ({
         ...prev,
         food: { ...prev.food, [field]: value },
@@ -163,10 +196,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   )
 
   const updateCamping = useCallback(
-    <K extends keyof FormData['camping']>(
-      field: K,
-      value: FormData['camping'][K]
-    ) => {
+    <K extends keyof FormData['camping']>(field: K, value: FormData['camping'][K]) => {
       setFormData((prev) => ({
         ...prev,
         camping: { ...prev.camping, [field]: value },
@@ -178,20 +208,14 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const goNext = () => {
     let result = { valid: true, errors: {} as Record<string, string> }
-
-    if (step === 0) {
-      result = validateStep1(formData)
-    } else if (step === 1) {
-      result = validateStep2(formData)
-    } else if (step === 2) {
-      result = validateStep3(formData)
-    }
+    if (step === 0) result = validateStep1(formData)
+    else if (step === 1) result = validateStep2(formData)
+    else if (step === 2) result = validateStep3(formData)
 
     if (!result.valid) {
       setErrors(result.errors)
       return
     }
-
     setDirection(1)
     setStep((s) => Math.min(s + 1, 3))
   }
@@ -203,7 +227,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const handleSubmit = async () => {
     if (!eventId) return
-
     setIsSubmitting(true)
     try {
       const registrationData = {
@@ -219,7 +242,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
       if (isEditing && editRegistration) {
         await updateRegistration(editRegistration.id, registrationData)
-        // Änderungsmail senden (fire-and-forget)
         if (registrationData.email && accessToken) {
           sendUpdateEmail(
             { ...registrationData, id: editRegistration.id },
@@ -229,11 +251,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
         addToast('Änderungen gespeichert!', 'success')
         onClose?.()
       } else {
-        const regId = await createRegistration({
-          eventId,
-          ...registrationData,
-        })
-        // Bestätigungsmail senden (fire-and-forget)
+        const regId = await createRegistration({ eventId, ...registrationData })
         if (registrationData.email && accessToken) {
           sendConfirmationEmail(
             { ...registrationData, id: regId },
@@ -249,8 +267,8 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
         }, 3000)
       }
     } catch (error) {
-      console.error('Registration error:', error)
-      addToast('Fehler beim Speichern. Bitte versuche es erneut.', 'error')
+      const msg = error instanceof Error ? error.message : 'Fehler beim Speichern. Bitte versuche es erneut.'
+      addToast(msg, 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -260,7 +278,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     if (!editRegistration) return
     setIsDeleting(true)
     try {
-      // Löschungsmail senden bevor der Eintrag gelöscht wird
       const email = editRegistration.email ?? formData.email.trim()
       if (email) {
         sendDeletionEmail({
@@ -309,13 +326,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                 transition={{ delay: 0.2, type: 'spring' }}
                 className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center"
               >
-                <svg
-                  className="w-10 h-10 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
+                <svg className="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <motion.path
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
@@ -326,7 +337,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   />
                 </svg>
               </motion.div>
-              {/* Confetti particles */}
               {Array.from({ length: 12 }).map((_, i) => (
                 <motion.div
                   key={i}
@@ -339,34 +349,15 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   }}
                   transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full"
-                  style={{
-                    backgroundColor: [
-                      '#F97316',
-                      '#14B8A6',
-                      '#FBBF24',
-                      '#EC4899',
-                      '#8B5CF6',
-                      '#10B981',
-                    ][i % 6],
-                  }}
+                  style={{ backgroundColor: ['#F97316','#14B8A6','#FBBF24','#EC4899','#8B5CF6','#10B981'][i % 6] }}
                 />
               ))}
             </div>
           </motion.div>
-          <motion.h3
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="text-xl font-display font-bold text-warm-800 mb-2"
-          >
+          <motion.h3 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-xl font-display font-bold text-warm-800 mb-2">
             Perfekt!
           </motion.h3>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-warm-500 text-center"
-          >
+          <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="text-warm-500 text-center">
             Deine Anmeldung wurde erfolgreich gespeichert.
           </motion.p>
         </div>
@@ -383,62 +374,26 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
             <div key={s.label} className="flex items-center flex-1 last:flex-none">
               <button
                 type="button"
-                onClick={() => {
-                  if (i < step) {
-                    setDirection(i < step ? -1 : 1)
-                    setStep(i)
-                  }
-                }}
-                className={`flex flex-col items-center gap-1 cursor-pointer ${
-                  i <= step ? 'cursor-pointer' : 'cursor-default'
-                }`}
+                onClick={() => { if (i < step) { setDirection(i < step ? -1 : 1); setStep(i) } }}
+                className={`flex flex-col items-center gap-1 cursor-pointer ${i <= step ? 'cursor-pointer' : 'cursor-default'}`}
                 disabled={i > step}
               >
                 <motion.div
                   animate={{
                     scale: i === step ? 1.1 : 1,
-                    backgroundColor:
-                      i < step
-                        ? '#14B8A6'
-                        : i === step
-                          ? '#F97316'
-                          : '#E7E5E4',
+                    backgroundColor: i < step ? '#14B8A6' : i === step ? '#F97316' : '#E7E5E4',
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-sm"
                 >
                   {i < step ? (
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   ) : (
-                    <span
-                      className={
-                        i === step ? 'text-white' : 'text-warm-400'
-                      }
-                    >
-                      {s.icon}
-                    </span>
+                    <span className={i === step ? 'text-white' : 'text-warm-400'}>{s.icon}</span>
                   )}
                 </motion.div>
-                <span
-                  className={`text-xs font-medium hidden sm:block ${
-                    i === step
-                      ? 'text-primary-600'
-                      : i < step
-                        ? 'text-secondary-600'
-                        : 'text-warm-400'
-                  }`}
-                >
+                <span className={`text-xs font-medium hidden sm:block ${i === step ? 'text-primary-600' : i < step ? 'text-secondary-600' : 'text-warm-400'}`}>
                   {s.label}
                 </span>
               </button>
@@ -460,145 +415,78 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       <div className="px-6 pb-6 min-h-[320px] relative overflow-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           {step === 0 && (
-            <motion.div
-              key="step-0"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="space-y-5"
-            >
+            <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeInOut' }} className="space-y-5">
               <div>
-                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">
-                  Wer kommt?
-                </h3>
-                <p className="text-sm text-warm-500">
-                  Erzähl uns, wer dabei ist!
-                </p>
+                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">Wer kommt?</h3>
+                <p className="text-sm text-warm-500">Erzähl uns, wer dabei ist!</p>
               </div>
-
-              <Input
-                label="Haushalt/Familie"
-                value={formData.familyName}
-                onChange={(e) => updateField('familyName', e.target.value)}
-                placeholder="z.B. Sorings im Norden"
-                error={errors.familyName}
-              />
-
-              <Input
-                label="Ansprechpartner"
-                value={formData.contactName}
-                onChange={(e) => updateField('contactName', e.target.value)}
-                placeholder="Vorname"
-                error={errors.contactName}
-              />
-
+              <Input label="Haushalt/Familie" value={formData.familyName} onChange={(e) => updateField('familyName', e.target.value)} placeholder="z.B. Sorings im Norden" error={errors.familyName} />
+              <Input label="Ansprechpartner" value={formData.contactName} onChange={(e) => updateField('contactName', e.target.value)} placeholder="Vorname" error={errors.contactName} />
               <div>
-                <Input
-                  label="E-Mail"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateField('email', e.target.value)}
-                  placeholder="fuer-bestaetigung@beispiel.de"
-                  error={errors.email}
-                />
-                <p className="text-xs text-warm-400 mt-1">
-                  Du bekommst eine Bestätigung mit Bearbeitungslink
-                </p>
+                <Input label="E-Mail" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="fuer-bestaetigung@beispiel.de" error={errors.email} />
+                <p className="text-xs text-warm-400 mt-1">Du bekommst eine Bestätigung mit Bearbeitungslink</p>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
-                <NumberStepper
-                  label="Erwachsene"
-                  value={formData.adultsCount}
-                  onChange={(v) => updateField('adultsCount', v)}
-                  min={1}
-                  max={20}
-                  error={errors.adultsCount}
-                />
-                <NumberStepper
-                  label="Kinder"
-                  value={formData.childrenCount}
-                  onChange={(v) => updateField('childrenCount', v)}
-                  min={0}
-                  max={20}
-                />
+                <NumberStepper label="Erwachsene" value={formData.adultsCount} onChange={(v) => updateField('adultsCount', v)} min={1} max={20} error={errors.adultsCount} />
+                <NumberStepper label="Kinder" value={formData.childrenCount} onChange={(v) => updateField('childrenCount', v)} min={0} max={20} />
               </div>
-
             </motion.div>
           )}
 
           {step === 1 && (
-            <motion.div
-              key="step-1"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="space-y-5"
-            >
+            <motion.div key="step-1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeInOut' }} className="space-y-5">
               <div>
-                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">
-                  Was bringst du mit?
-                </h3>
-                <p className="text-sm text-warm-500">
-                  Jeder Beitrag hilft! {'\uD83C\uDF82\uD83E\uDD57'}
-                </p>
+                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">Was bringst du mit?</h3>
+                <p className="text-sm text-warm-500">Jeder Beitrag hilft! {'\uD83C\uDF82\uD83E\uDD57'}</p>
               </div>
 
+              {/* Smart food hint */}
+              {foodHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-start gap-2"
+                >
+                  <span className="text-lg shrink-0">{foodHint.emoji}</span>
+                  <p className="text-sm text-amber-800">{foodHint.text}</p>
+                </motion.div>
+              )}
+
               <div className="space-y-4">
+                {/* Kuchen */}
                 <div className="rounded-xl border border-warm-100 p-4 space-y-3">
-                  <Toggle
-                    checked={formData.food.bringsCake}
-                    onChange={(checked) => {
-                      updateFood('bringsCake', checked)
-                      if (!checked) updateFood('cakeDescription', '')
-                    }}
-                    label="Ich bringe Kuchen mit"
-                  />
+                  {cakeLimitReached && !formData.food.bringsCake ? (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <span>🎂</span>
+                      <span>Kuchen-Kontingent voll ({FOOD_LIMIT}/{FOOD_LIMIT}) – danke an alle!</span>
+                    </div>
+                  ) : (
+                    <Toggle
+                      checked={formData.food.bringsCake}
+                      onChange={(checked) => {
+                        updateFood('bringsCake', checked)
+                        if (!checked) updateFood('cakeDescription', '')
+                      }}
+                      label="Ich bringe Kuchen mit"
+                    />
+                  )}
                   <AnimatePresence>
                     {formData.food.bringsCake && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden space-y-2"
-                      >
-                        <Textarea
-                          label="Welchen Kuchen?"
-                          value={formData.food.cakeDescription}
-                          onChange={(e) =>
-                            updateFood('cakeDescription', e.target.value)
-                          }
-                          placeholder="z.B. Schokoladenkuchen, Erdbeertorte..."
-                          error={errors.cakeDescription}
-                        />
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden space-y-2">
+                        <Textarea label="Welchen Kuchen?" value={formData.food.cakeDescription} onChange={(e) => updateFood('cakeDescription', e.target.value)} placeholder="z.B. Schokoladenkuchen, Erdbeertorte..." error={errors.cakeDescription} />
                         {cakeDuplicateHint && (
-                          <p className="text-xs text-amber-600 flex items-center gap-1">
-                            <span>{'\u26A0\uFE0F'}</span> {cakeDuplicateHint}
-                          </p>
+                          <p className="text-xs text-amber-600 flex items-center gap-1"><span>{'\u26A0\uFE0F'}</span> {cakeDuplicateHint}</p>
                         )}
                       </motion.div>
                     )}
                   </AnimatePresence>
                   {existingFood.cakes.length > 0 && (
                     <div className="pt-1">
-                      <p className="text-xs text-warm-400 mb-1.5">
-                        Bereits gemeldet:
-                      </p>
+                      <p className="text-xs text-warm-400 mb-1.5">Bereits gemeldet ({existingFood.cakes.length}/{FOOD_LIMIT}):</p>
                       <div className="flex flex-wrap gap-1.5">
                         {existingFood.cakes.map((c, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100"
-                          >
-                            {c.description}
-                            <span className="text-warm-300">({c.family})</span>
+                          <span key={i} className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100">
+                            {c.description} <span className="text-warm-300">({c.family})</span>
                           </span>
                         ))}
                       </div>
@@ -606,54 +494,71 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   )}
                 </div>
 
+                {/* Salat */}
                 <div className="rounded-xl border border-warm-100 p-4 space-y-3">
-                  <Toggle
-                    checked={formData.food.bringsSalad}
-                    onChange={(checked) => {
-                      updateFood('bringsSalad', checked)
-                      if (!checked) updateFood('saladDescription', '')
-                    }}
-                    label="Ich bringe Salat mit"
-                  />
+                  {saladLimitReached && !formData.food.bringsSalad ? (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <span>🥗</span>
+                      <span>Salat-Kontingent voll ({FOOD_LIMIT}/{FOOD_LIMIT}) – danke an alle!</span>
+                    </div>
+                  ) : (
+                    <Toggle
+                      checked={formData.food.bringsSalad}
+                      onChange={(checked) => {
+                        updateFood('bringsSalad', checked)
+                        if (!checked) updateFood('saladDescription', '')
+                      }}
+                      label="Ich bringe Salat mit"
+                    />
+                  )}
                   <AnimatePresence>
                     {formData.food.bringsSalad && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden space-y-2"
-                      >
-                        <Textarea
-                          label="Welchen Salat?"
-                          value={formData.food.saladDescription}
-                          onChange={(e) =>
-                            updateFood('saladDescription', e.target.value)
-                          }
-                          placeholder="z.B. Nudelsalat, Griechischer Salat..."
-                          error={errors.saladDescription}
-                        />
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden space-y-2">
+                        <Textarea label="Welchen Salat?" value={formData.food.saladDescription} onChange={(e) => updateFood('saladDescription', e.target.value)} placeholder="z.B. Nudelsalat, Griechischer Salat..." error={errors.saladDescription} />
                         {saladDuplicateHint && (
-                          <p className="text-xs text-amber-600 flex items-center gap-1">
-                            <span>{'\u26A0\uFE0F'}</span> {saladDuplicateHint}
-                          </p>
+                          <p className="text-xs text-amber-600 flex items-center gap-1"><span>{'\u26A0\uFE0F'}</span> {saladDuplicateHint}</p>
                         )}
                       </motion.div>
                     )}
                   </AnimatePresence>
                   {existingFood.salads.length > 0 && (
                     <div className="pt-1">
-                      <p className="text-xs text-warm-400 mb-1.5">
-                        Bereits gemeldet:
-                      </p>
+                      <p className="text-xs text-warm-400 mb-1.5">Bereits gemeldet ({existingFood.salads.length}/{FOOD_LIMIT}):</p>
                       <div className="flex flex-wrap gap-1.5">
                         {existingFood.salads.map((s, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100"
-                          >
-                            {s.description}
-                            <span className="text-warm-300">({s.family})</span>
+                          <span key={i} className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100">
+                            {s.description} <span className="text-warm-300">({s.family})</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sonstiges */}
+                <div className="rounded-xl border border-warm-100 p-4 space-y-3">
+                  <Toggle
+                    checked={formData.food.bringsOther}
+                    onChange={(checked) => {
+                      updateFood('bringsOther', checked)
+                      if (!checked) updateFood('otherDescription', '')
+                    }}
+                    label="Ich bringe Sonstiges mit (z.B. Brot)"
+                  />
+                  <AnimatePresence>
+                    {formData.food.bringsOther && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden space-y-2">
+                        <Textarea label="Was bringst du mit?" value={formData.food.otherDescription} onChange={(e) => updateFood('otherDescription', e.target.value)} placeholder="z.B. Brot, Dips, Getränke..." error={errors.otherDescription} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {existingFood.others.length > 0 && (
+                    <div className="pt-1">
+                      <p className="text-xs text-warm-400 mb-1.5">Bereits gemeldet:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {existingFood.others.map((o, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-xs bg-warm-50 rounded-full px-2.5 py-1 text-warm-500 border border-warm-100">
+                            {o.description} <span className="text-warm-300">({o.family})</span>
                           </span>
                         ))}
                       </div>
@@ -661,30 +566,15 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   )}
                 </div>
               </div>
-
             </motion.div>
           )}
 
           {step === 2 && (
-            <motion.div
-              key="step-2"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="space-y-5"
-            >
+            <motion.div key="step-2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeInOut' }} className="space-y-5">
               <div>
-                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">
-                  Übernachten?
-                </h3>
-                <p className="text-sm text-warm-500">
-                  Möchtest du auf dem Gelände zelten?
-                </p>
+                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">Übernachten?</h3>
+                <p className="text-sm text-warm-500">Möchtest du auf dem Gelände zelten?</p>
               </div>
-
               <div className="rounded-xl border border-warm-100 p-4 space-y-4">
                 <Toggle
                   checked={formData.camping.wantsCamping}
@@ -703,124 +593,56 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                 />
                 <AnimatePresence>
                   {formData.camping.wantsCamping && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden space-y-4"
-                    >
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <NumberStepper
-                          label="Anzahl Zelte"
-                          value={formData.camping.tentCount}
-                          onChange={(v) => updateCamping('tentCount', v)}
-                          min={1}
-                          max={10}
-                          error={errors.tentCount}
-                        />
-                        <NumberStepper
-                          label="Personen zelten"
-                          value={formData.camping.personCount}
-                          onChange={(v) => updateCamping('personCount', v)}
-                          min={1}
-                          max={50}
-                        />
+                        <NumberStepper label="Anzahl Zelte" value={formData.camping.tentCount} onChange={(v) => updateCamping('tentCount', v)} min={1} max={10} error={errors.tentCount} />
+                        <NumberStepper label="Personen zelten" value={formData.camping.personCount} onChange={(v) => updateCamping('personCount', v)} min={1} max={50} />
                       </div>
-                      <Textarea
-                        label="Anmerkungen zum Zelten"
-                        value={formData.camping.notes}
-                        onChange={(e) =>
-                          updateCamping('notes', e.target.value)
-                        }
-                        placeholder="z.B. Besondere Wünsche zum Zelten"
-                      />
+                      <Textarea label="Anmerkungen zum Zelten" value={formData.camping.notes} onChange={(e) => updateCamping('notes', e.target.value)} placeholder="z.B. Besondere Wünsche zum Zelten" />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-
-              <Textarea
-                label="Sonstige Anmerkungen"
-                value={formData.comments}
-                onChange={(e) => updateField('comments', e.target.value)}
-                placeholder="Allergien, besondere Wünsche..."
-              />
+              <Textarea label="Sonstige Anmerkungen" value={formData.comments} onChange={(e) => updateField('comments', e.target.value)} placeholder="Allergien, besondere Wünsche..." />
             </motion.div>
           )}
 
           {step === 3 && (
-            <motion.div
-              key="step-3"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="space-y-5"
-            >
+            <motion.div key="step-3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeInOut' }} className="space-y-5">
               <div>
-                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">
-                  Zusammenfassung
-                </h3>
-                <p className="text-sm text-warm-500">
-                  Alles richtig? Dann ab damit!
-                </p>
+                <h3 className="text-lg font-display font-bold text-warm-800 mb-1">Zusammenfassung</h3>
+                <p className="text-sm text-warm-500">Alles richtig? Dann ab damit!</p>
               </div>
-
               <div className="space-y-3">
-                {/* Family info */}
                 <div className="rounded-xl bg-warm-50 p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-warm-600">
                     <span>{'\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66'}</span>
                     <span>Haushalt</span>
                   </div>
-                  <p className="font-semibold text-warm-800">
-                    {formData.familyName}
-                  </p>
+                  <p className="font-semibold text-warm-800">{formData.familyName}</p>
+                  <p className="text-sm text-warm-500">Ansprechpartner: {formData.contactName}</p>
+                  {formData.email.trim() && <p className="text-sm text-warm-500">E-Mail: {formData.email.trim()}</p>}
                   <p className="text-sm text-warm-500">
-                    Ansprechpartner: {formData.contactName}
-                  </p>
-                  {formData.email.trim() && (
-                    <p className="text-sm text-warm-500">
-                      E-Mail: {formData.email.trim()}
-                    </p>
-                  )}
-                  <p className="text-sm text-warm-500">
-                    {formData.adultsCount} Erwachsene
-                    {formData.childrenCount > 0 &&
-                      `, ${formData.childrenCount} Kinder`}
+                    {formData.adultsCount} Erwachsene{formData.childrenCount > 0 && `, ${formData.childrenCount} Kinder`}
                   </p>
                 </div>
 
-                {/* Food */}
                 <div className="rounded-xl bg-warm-50 p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-warm-600">
                     <span>{'\uD83C\uDF7D\uFE0F'}</span>
                     <span>Mitgebracht</span>
                   </div>
-                  {formData.food.bringsCake || formData.food.bringsSalad ? (
+                  {formData.food.bringsCake || formData.food.bringsSalad || formData.food.bringsOther ? (
                     <div className="space-y-1">
-                      {formData.food.bringsCake && (
-                        <p className="text-sm text-warm-700">
-                          {'\uD83C\uDF70'} {formData.food.cakeDescription}
-                        </p>
-                      )}
-                      {formData.food.bringsSalad && (
-                        <p className="text-sm text-warm-700">
-                          {'\uD83E\uDD57'} {formData.food.saladDescription}
-                        </p>
-                      )}
+                      {formData.food.bringsCake && <p className="text-sm text-warm-700">{'\uD83C\uDF70'} {formData.food.cakeDescription}</p>}
+                      {formData.food.bringsSalad && <p className="text-sm text-warm-700">{'\uD83E\uDD57'} {formData.food.saladDescription}</p>}
+                      {formData.food.bringsOther && <p className="text-sm text-warm-700">🍞 {formData.food.otherDescription}</p>}
                     </div>
                   ) : (
-                    <p className="text-sm text-warm-400 italic">
-                      Nichts - ist auch völlig in Ordnung!
-                    </p>
+                    <p className="text-sm text-warm-400 italic">Nichts - ist auch völlig in Ordnung!</p>
                   )}
                 </div>
 
-                {/* Camping */}
                 <div className="rounded-xl bg-warm-50 p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-warm-600">
                     <span>{'\u26FA'}</span>
@@ -829,34 +651,23 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   {formData.camping.wantsCamping ? (
                     <div className="space-y-1">
                       <p className="text-sm text-warm-700">
-                        {formData.camping.tentCount}{' '}
-                        {formData.camping.tentCount === 1 ? 'Zelt' : 'Zelte'}
-                        {formData.camping.personCount > 0 &&
-                          `, ${formData.camping.personCount} ${formData.camping.personCount === 1 ? 'Person' : 'Personen'}`}
+                        {formData.camping.tentCount} {formData.camping.tentCount === 1 ? 'Zelt' : 'Zelte'}
+                        {formData.camping.personCount > 0 && `, ${formData.camping.personCount} ${formData.camping.personCount === 1 ? 'Person' : 'Personen'}`}
                       </p>
-                      {formData.camping.notes && (
-                        <p className="text-sm text-warm-500">
-                          {formData.camping.notes}
-                        </p>
-                      )}
+                      {formData.camping.notes && <p className="text-sm text-warm-500">{formData.camping.notes}</p>}
                     </div>
                   ) : (
-                    <p className="text-sm text-warm-400 italic">
-                      Kein Zelten
-                    </p>
+                    <p className="text-sm text-warm-400 italic">Kein Zelten</p>
                   )}
                 </div>
 
-                {/* Comments */}
                 {formData.comments && (
                   <div className="rounded-xl bg-warm-50 p-4 space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-warm-600">
                       <span>{'\uD83D\uDCDD'}</span>
                       <span>Anmerkungen</span>
                     </div>
-                    <p className="text-sm text-warm-700">
-                      {formData.comments}
-                    </p>
+                    <p className="text-sm text-warm-700">{formData.comments}</p>
                   </div>
                 )}
               </div>
@@ -868,11 +679,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       {/* Unregister hint */}
       {isEditing && step === 0 && (
         <div className="px-6 pb-2">
-          <button
-            type="button"
-            onClick={() => setShowUnregisterConfirm(true)}
-            className="text-sm text-warm-400 hover:text-red-500 transition-colors cursor-pointer"
-          >
+          <button type="button" onClick={() => setShowUnregisterConfirm(true)} className="text-sm text-warm-400 hover:text-red-500 transition-colors cursor-pointer">
             Wieder abmelden
           </button>
         </div>
@@ -880,60 +687,25 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
       {/* Navigation */}
       <div className="px-6 pb-6 flex items-center justify-between gap-3">
-        {step > 0 ? (
-          <Button variant="ghost" onClick={goBack} type="button">
-            Zurück
-          </Button>
-        ) : (
-          <div />
-        )}
-
+        {step > 0 ? <Button variant="ghost" onClick={goBack} type="button">Zurück</Button> : <div />}
         {step < 3 ? (
-          <Button onClick={goNext} type="button">
-            Weiter
-          </Button>
+          <Button onClick={goNext} type="button">Weiter</Button>
         ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            size="lg"
-            type="button"
-          >
-            {isSubmitting
-              ? 'Wird gespeichert...'
-              : isEditing
-                ? 'Änderungen speichern'
-                : 'Anmeldung absenden'}
+          <Button onClick={handleSubmit} disabled={isSubmitting} size="lg" type="button">
+            {isSubmitting ? 'Wird gespeichert...' : isEditing ? 'Änderungen speichern' : 'Anmeldung absenden'}
           </Button>
         )}
       </div>
 
       {/* Unregister Confirmation Modal */}
-      <Modal
-        isOpen={showUnregisterConfirm}
-        onClose={() => setShowUnregisterConfirm(false)}
-        title="Anmeldung zurückziehen?"
-      >
+      <Modal isOpen={showUnregisterConfirm} onClose={() => setShowUnregisterConfirm(false)} title="Anmeldung zurückziehen?">
         <div className="space-y-4">
           <p className="text-sm text-warm-600">
-            Möchtest du die Anmeldung für <strong>{formData.familyName}</strong> wirklich
-            zurückziehen? Alle Daten (Personen, Essen, Zelten) werden unwiderruflich gelöscht.
+            Möchtest du die Anmeldung für <strong>{formData.familyName}</strong> wirklich zurückziehen? Alle Daten werden unwiderruflich gelöscht.
           </p>
           <div className="flex justify-end gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => setShowUnregisterConfirm(false)}
-              type="button"
-            >
-              Abbrechen
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleUnregister}
-              disabled={isDeleting}
-              type="button"
-              className="!border-red-300 !text-red-600 hover:!bg-red-50"
-            >
+            <Button variant="ghost" onClick={() => setShowUnregisterConfirm(false)} type="button">Abbrechen</Button>
+            <Button variant="outline" onClick={handleUnregister} disabled={isDeleting} type="button" className="!border-red-300 !text-red-600 hover:!bg-red-50">
               {isDeleting ? 'Wird gelöscht...' : 'Ja, abmelden'}
             </Button>
           </div>

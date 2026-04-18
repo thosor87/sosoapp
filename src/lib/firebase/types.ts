@@ -8,6 +8,8 @@ export interface EventConfig {
   location: string
   accessToken: string
   adminPasswordHash: string
+  adminEmail?: string
+  foodLimit?: number
   announcements: Announcement[]
   isRegistrationOpen: boolean
   timelineNotesTop?: string
@@ -47,6 +49,22 @@ export interface FoodContribution {
   cakeDescription: string
   bringsSalad: boolean
   saladDescription: string
+  bringsOther?: boolean
+  otherDescription?: string
+}
+
+export type AuditAction = 'create' | 'update' | 'delete'
+
+export interface AuditLog {
+  id: string
+  eventId: string
+  action: AuditAction
+  entityType: 'registration'
+  entityId: string
+  familyName: string
+  summary: string
+  performedBy: 'user' | 'admin'
+  timestamp: Timestamp
 }
 
 export interface CampingInfo {

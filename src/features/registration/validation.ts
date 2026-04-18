@@ -47,6 +47,10 @@ export function validateStep2(data: Step2Data): ValidationResult {
     errors.saladDescription = 'Bitte beschreibe den Salat'
   }
 
+  if (data.food.bringsOther && !data.food.otherDescription?.trim()) {
+    errors.otherDescription = 'Bitte beschreibe, was du mitbringst'
+  }
+
   return { valid: Object.keys(errors).length === 0, errors }
 }
 

@@ -16,6 +16,8 @@ export function EventSettings() {
   const [date, setDate] = useState('')
   const [location, setLocation] = useState('')
   const [accessToken, setAccessToken] = useState('')
+  const [adminEmail, setAdminEmail] = useState('')
+  const [foodLimit, setFoodLimit] = useState(15)
   const [newPassword, setNewPassword] = useState('')
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -26,6 +28,8 @@ export function EventSettings() {
     setTitle(eventConfig.title || '')
     setLocation(eventConfig.location || '')
     setAccessToken(eventConfig.accessToken || '')
+    setAdminEmail(eventConfig.adminEmail || '')
+    setFoodLimit(eventConfig.foodLimit ?? 15)
     setIsRegistrationOpen(eventConfig.isRegistrationOpen ?? true)
 
     // Convert Timestamp to date string for the date input
@@ -47,10 +51,13 @@ export function EventSettings() {
     setIsSaving(true)
     try {
       const docRef = doc(db, 'events', eventId)
+      const parsedLimit = Math.max(1, Math.min(100, parseInt(String(foodLimit), 10) || 15))
       const updateData: Record<string, unknown> = {
         title,
         location,
         accessToken,
+        adminEmail: adminEmail.trim(),
+        foodLimit: parsedLimit,
         isRegistrationOpen,
         updatedAt: serverTimestamp(),
       }
@@ -151,6 +158,32 @@ export function EventSettings() {
               </svg>
             </Button>
           </div>
+        </div>
+
+        <div>
+          <Input
+            label="Admin-E-Mail (Tagesrückblick)"
+            type="email"
+            value={adminEmail}
+            onChange={(e) => setAdminEmail(e.target.value)}
+            placeholder="z.B. admin@beispiel.de"
+          />
+          <p className="text-xs text-warm-400 mt-1">
+            Hierhin wird täglich eine Zusammenfassung der Änderungen geschickt.
+          </p>
+        </div>
+
+        <div>
+          <Input
+            label="Speisekontingent (max. pro Kategorie)"
+            type="number"
+            value={String(foodLimit)}
+            onChange={(e) => setFoodLimit(parseInt(e.target.value, 10) || 15)}
+            placeholder="15"
+          />
+          <p className="text-xs text-warm-400 mt-1">
+            Maximale Anzahl an Kuchen und Salaten. Standard: 15.
+          </p>
         </div>
 
         <Toggle

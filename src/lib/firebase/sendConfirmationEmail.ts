@@ -16,6 +16,8 @@ interface RegistrationSummary {
     cakeDescription: string
     bringsSalad: boolean
     saladDescription: string
+    bringsOther?: boolean
+    otherDescription?: string
   }
   camping: {
     wantsCamping: boolean
@@ -33,6 +35,9 @@ function buildSummaryHtml(reg: RegistrationSummary): string {
   }
   if (reg.food.bringsSalad) {
     foodParts.push(`Salat: ${reg.food.saladDescription}`)
+  }
+  if (reg.food.bringsOther && reg.food.otherDescription) {
+    foodParts.push(`Sonstiges: ${reg.food.otherDescription}`)
   }
   const foodSummary =
     foodParts.length > 0
