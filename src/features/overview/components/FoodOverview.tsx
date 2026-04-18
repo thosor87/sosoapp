@@ -69,10 +69,8 @@ export function FoodOverview() {
     .filter((r) => r.food.bringsOther && r.food.otherDescription)
     .map((r) => ({ familyName: r.familyName, description: r.food.otherDescription! }))
 
-  const hasOthers = others.length > 0 || registrations.some((r) => r.food.bringsOther !== undefined)
-
   return (
-    <div className={`grid grid-cols-1 gap-4 ${hasOthers ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <FoodSection
         title="Kuchen"
         emoji={'\uD83C\uDF82'}
@@ -87,15 +85,13 @@ export function FoodOverview() {
         emptyText="Noch keine Salate angemeldet"
         colorClass="bg-emerald-50/50"
       />
-      {hasOthers && (
-        <FoodSection
-          title="Sonstiges"
-          emoji="🍞"
-          items={others}
-          emptyText="Noch nichts Sonstiges angemeldet"
-          colorClass="bg-violet-50/50"
-        />
-      )}
+      <FoodSection
+        title="Sonstiges"
+        emoji="🍞"
+        items={others}
+        emptyText="Noch nichts Sonstiges angemeldet"
+        colorClass="bg-violet-50/50"
+      />
     </div>
   )
 }

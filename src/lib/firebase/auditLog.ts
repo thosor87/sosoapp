@@ -3,7 +3,6 @@ import {
   addDoc,
   query,
   where,
-  orderBy,
   getDocs,
   serverTimestamp,
   Timestamp,
@@ -39,28 +38,30 @@ export async function writeAuditLog(params: {
 export async function getAuditLogs(eventId: string): Promise<AuditLog[]> {
   const q = query(
     collection(db, 'auditLogs'),
-    where('eventId', '==', eventId),
-    orderBy('timestamp', 'desc')
+    where('eventId', '==', eventId)
   )
   const snapshot = await getDocs(q)
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLog))
+  const logs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLog))
+  // Sort client-side to avoid composite index requirement
+  logs.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0))
+  return logs
 }
 
 export async function getAuditLogsForDate(eventId: string, date: Date): Promise<AuditLog[]> {
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(date)
-  end.setHours(23, 59, 59, 999)
+  const all = await getAuditLogs(eventId)
+  const startOfDay = new Date(date)
+  startOfDay.setHours(0, 0, 0, 0)
+  const endOfDay = new Date(date)
+  endOfDay.setHours(23, 59, 59, 999)
+  const startTs = Timestamp.fromDate(startOfDay).seconds
+  const endTs = Timestamp.fromDate(endOfDay).seconds
 
-  const q = query(
-    collection(db, 'auditLogs'),
-    where('eventId', '==', eventId),
-    where('timestamp', '>=', Timestamp.fromDate(start)),
-    where('timestamp', '<=', Timestamp.fromDate(end)),
-    orderBy('timestamp', 'asc')
-  )
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLog))
+  return all
+    .filter((l) => {
+      const s = l.timestamp?.seconds ?? 0
+      return s >= startTs && s <= endTs
+    })
+    .sort((a, b) => (a.timestamp?.seconds ?? 0) - (b.timestamp?.seconds ?? 0))
 }
 
 export function buildRegistrationSummary(data: {
