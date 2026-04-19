@@ -63,9 +63,12 @@ jobs:
           ruleset = r.json()['name']
           print('Ruleset created:', ruleset)
 
-          # 2. Release auf neues Ruleset zeigen lassen
-          r = requests.put(base + '/releases/cloud.firestore', headers=hdrs,
-              json={'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset})
+          # 2. Release auf neues Ruleset zeigen lassen (PATCH wenn vorhanden, sonst POST)
+          release_body = {'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset}
+          r = requests.patch(base + '/releases/cloud.firestore',
+              headers=hdrs, params={'updateMask': 'rulesetName'}, json=release_body)
+          if r.status_code == 404:
+              r = requests.post(base + '/releases', headers=hdrs, json=release_body)
           r.raise_for_status()
           print('Firestore rules deployed successfully')
           PYEOF
