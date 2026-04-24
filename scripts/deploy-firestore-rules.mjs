@@ -5,7 +5,18 @@ import crypto from 'crypto';
 import https from 'https';
 import fs from 'fs';
 
-const sa = JSON.parse(process.env.FIREBASE_SA_JSON);
+console.log('Node version:', process.version);
+console.log('PROJECT_ID set:', !!process.env.PROJECT_ID);
+console.log('FIREBASE_SA_JSON set:', !!process.env.FIREBASE_SA_JSON);
+
+let sa;
+try {
+  sa = JSON.parse(process.env.FIREBASE_SA_JSON);
+  console.log('SA parsed, client_email:', sa.client_email);
+} catch (e) {
+  console.error('Failed to parse FIREBASE_SA_JSON:', e.message);
+  process.exit(1);
+}
 const pid = process.env.PROJECT_ID;
 const rules = fs.readFileSync('firestore.rules', 'utf8');
 
