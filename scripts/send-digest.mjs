@@ -12,7 +12,6 @@ const missing = [
   !EMAILJS_SERVICE_ID && 'EMAILJS_SERVICE_ID',
   !EMAILJS_TEMPLATE_ID && 'EMAILJS_TEMPLATE_ID',
   !EMAILJS_PUBLIC_KEY && 'EMAILJS_PUBLIC_KEY',
-  !ADMIN_EMAIL && 'ADMIN_EMAIL',
 ].filter(Boolean)
 if (missing.length > 0) {
   console.log('Missing env vars:', missing.join(', '))
@@ -45,6 +44,10 @@ if (eventsSnap.empty) {
 const eventDoc = eventsSnap.docs[0]
 const eventId = eventDoc.id
 const adminEmail = eventDoc.data()?.adminEmail || ADMIN_EMAIL
+if (!adminEmail) {
+  console.log('No admin email in event config or ADMIN_EMAIL env var – skipping.')
+  process.exit(0)
+}
 console.log('Event:', eventId, '| Recipient:', adminEmail)
 
 // Fetch all audit logs for this event
