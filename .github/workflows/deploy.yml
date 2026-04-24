@@ -64,19 +64,9 @@ jobs:
           print('Ruleset created:', ruleset)
 
           # 2. Release auf neues Ruleset zeigen lassen
+          # Release existiert bereits → PATCH ohne updateMask (POST ist 403, updateMask-Format schlägt fehl)
           release_body = {'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset}
-
-          # Bestehende Releases auflisten (Diagnose)
-          r = requests.get(base + '/releases', headers=hdrs)
-          print('Existing releases:', r.status_code, r.text[:300])
-
-          # PATCH versuchen, bei Fehler POST
-          r = requests.patch(base + '/releases/cloud.firestore',
-              headers=hdrs, params={'updateMask': 'rulesetName'}, json=release_body)
-          print('PATCH status:', r.status_code, r.text[:300])
-          if r.status_code != 200:
-              r = requests.post(base + '/releases', headers=hdrs, json=release_body)
-              print('POST status:', r.status_code, r.text[:300])
+          r = requests.patch(base + '/releases/cloud.firestore', headers=hdrs, json=release_body)
           r.raise_for_status()
           print('Firestore rules deployed successfully')
           PYEOF
