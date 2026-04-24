@@ -64,6 +64,14 @@ export async function getAuditLogsForDate(eventId: string, date: Date): Promise<
     .sort((a, b) => (a.timestamp?.seconds ?? 0) - (b.timestamp?.seconds ?? 0))
 }
 
+export async function getAuditLogsSince(eventId: string, since: Date): Promise<AuditLog[]> {
+  const all = await getAuditLogs(eventId)
+  const sinceTs = Timestamp.fromDate(since).seconds
+  return all
+    .filter((l) => (l.timestamp?.seconds ?? 0) > sinceTs)
+    .sort((a, b) => (a.timestamp?.seconds ?? 0) - (b.timestamp?.seconds ?? 0))
+}
+
 type RegistrationSnapshot = {
   familyName: string
   contactName: string
