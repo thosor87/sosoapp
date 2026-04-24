@@ -25,4 +25,5 @@ jobs:
           EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
           EMAILJS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
           EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
+          EMAILJS_PRIVATE_KEY: ${{ secrets.VITE_EMAILJS_PRIVATE_KEY }}
           ADMIN_EMAIL: ${{ secrets.VITE_ADMIN_EMAIL }}
