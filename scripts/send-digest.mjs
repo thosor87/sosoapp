@@ -8,8 +8,14 @@ const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID
 const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL
 
-if (!ADMIN_EMAIL || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
-  console.log('Missing env vars, skipping digest.')
+const missing = [
+  !EMAILJS_SERVICE_ID && 'EMAILJS_SERVICE_ID',
+  !EMAILJS_TEMPLATE_ID && 'EMAILJS_TEMPLATE_ID',
+  !EMAILJS_PUBLIC_KEY && 'EMAILJS_PUBLIC_KEY',
+  !ADMIN_EMAIL && 'ADMIN_EMAIL',
+].filter(Boolean)
+if (missing.length > 0) {
+  console.log('Missing env vars:', missing.join(', '))
   process.exit(0)
 }
 
