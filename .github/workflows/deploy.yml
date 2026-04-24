@@ -38,16 +38,17 @@ jobs:
           FIREBASE_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
         run: |
-          pip install --quiet google-auth requests
+          pip install --quiet google-auth google-api-python-client
           python3 - <<'PYEOF'
-          import json, os, requests
-          import google.auth.transport.requests
+          import json, os
           import google.oauth2.service_account
+          from googleapiclient.discovery import build
 
           sa  = json.loads(os.environ['FIREBASE_SA_JSON'])
           pid = os.environ['PROJECT_ID']
           rules = open('firestore.rules').read()
           print('SA client_email:', sa.get('client_email'))
+          print('Project ID:', pid)
 
           creds = google.oauth2.service_account.Credentials.from_service_account_info(
               sa, scopes=[
@@ -55,22 +56,28 @@ jobs:
                   'https://www.googleapis.com/auth/firebase',
               ]
           )
-          creds.refresh(google.auth.transport.requests.Request())
-          print('Token obtained.')
 
-          hdrs = {'Authorization': 'Bearer ' + creds.token, 'Content-Type': 'application/json'}
-          base = 'https://firebaserules.googleapis.com/v1/projects/' + pid
+          svc = build('firebaserules', 'v1', credentials=creds)
 
-          r = requests.post(base + '/rulesets', headers=hdrs,
-              json={'source': {'files': [{'name': 'firestore.rules', 'content': rules}]}})
-          r.raise_for_status()
-          ruleset = r.json()['name']
-          print('Ruleset created:', ruleset)
+          # 1. List existing releases to confirm correct name
+          rels = svc.projects().releases().list(name='projects/' + pid).execute()
+          print('Existing releases:', [r['name'] for r in rels.get('releases', [])])
 
-          r = requests.patch(base + '/releases/cloud.firestore', headers=hdrs,
-              json={'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset})
-          print('PATCH status:', r.status_code, r.text[:300])
-          r.raise_for_status()
+          # 2. Create new ruleset
+          ruleset = svc.projects().rulesets().create(
+              name='projects/' + pid,
+              body={'source': {'files': [{'name': 'firestore.rules', 'content': rules}]}}
+          ).execute()
+          ruleset_name = ruleset['name']
+          print('Ruleset created:', ruleset_name)
+
+          # 3. Update the cloud.firestore release
+          release = svc.projects().releases().patch(
+              name='projects/' + pid + '/releases/cloud.firestore',
+              body={'name': 'projects/' + pid + '/releases/cloud.firestore',
+                    'rulesetName': ruleset_name}
+          ).execute()
+          print('Release updated:', release.get('name'), '→', release.get('rulesetName'))
           print('Firestore rules deployed successfully.')
           PYEOF
 
