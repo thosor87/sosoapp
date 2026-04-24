@@ -34,6 +34,7 @@ jobs:
       # Node.js 22 ist bereits vorhanden → kein pip/npm install nötig
       - name: Deploy Firestore rules via REST API
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        continue-on-error: true
         env:
           FIREBASE_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
