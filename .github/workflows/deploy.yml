@@ -49,7 +49,10 @@ jobs:
           rules = open('firestore.rules').read()
 
           creds = google.oauth2.service_account.Credentials.from_service_account_info(
-              sa, scopes=['https://www.googleapis.com/auth/cloud-platform']
+              sa, scopes=[
+                  'https://www.googleapis.com/auth/cloud-platform',
+                  'https://www.googleapis.com/auth/firebase',
+              ]
           )
           creds.refresh(google.auth.transport.requests.Request())
 
@@ -63,22 +66,11 @@ jobs:
           ruleset = r.json()['name']
           print('Ruleset created:', ruleset)
 
-          # 2. Release auf neues Ruleset zeigen lassen – alle Varianten probieren
-          variants = [
-              ({'updateMask': 'rulesetName'},  {'rulesetName': ruleset}),
-              ({'updateMask': 'ruleset_name'}, {'rulesetName': ruleset}),
-              ({},                             {'rulesetName': ruleset}),
-              ({},                             {'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset}),
-          ]
-          deployed = False
-          for params, body in variants:
-              r = requests.patch(base + '/releases/cloud.firestore', headers=hdrs, params=params, json=body)
-              print(f'PATCH params={list(params.keys())} status={r.status_code}: {r.text[:200]}')
-              if r.status_code == 200:
-                  deployed = True
-                  break
-          if not deployed:
-              raise SystemExit('All PATCH variants failed – see output above')
+          # 2. Release aktualisieren (exakt wie Firebase Admin SDK: name + rulesetName, kein updateMask)
+          r = requests.patch(base + '/releases/cloud.firestore', headers=hdrs,
+              json={'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset})
+          print('PATCH status:', r.status_code, r.text[:300])
+          r.raise_for_status()
           print('Firestore rules deployed successfully')
           PYEOF
 
