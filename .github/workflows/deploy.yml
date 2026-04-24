@@ -40,7 +40,7 @@ jobs:
         run: |
           pip install --quiet google-auth requests
           python3 - <<'PYEOF'
-          import json, os, sys, requests
+          import json, os, requests
           import google.auth.transport.requests
           import google.oauth2.service_account
 
@@ -58,36 +58,19 @@ jobs:
           hdrs = {'Authorization': 'Bearer ' + creds.token, 'Content-Type': 'application/json'}
           base = 'https://firebaserules.googleapis.com/v1/projects/' + pid
 
-          # 1. Create new ruleset
           r = requests.post(base + '/rulesets', headers=hdrs,
               json={'source': {'files': [{'name': 'firestore.rules', 'content': rules}]}})
           r.raise_for_status()
           rs = r.json()['name']
           print('Ruleset created:', rs)
 
-          # 2. Try PATCH with updateMask (field-mask variants)
-          for mask, body_key in [('rulesetName', 'rulesetName'), ('ruleset_name', 'ruleset_name')]:
-              r = requests.patch(base + '/releases/cloud.firestore',
-                  params={'updateMask': mask}, headers=hdrs, json={body_key: rs})
-              print(f'PATCH updateMask={mask} → {r.status_code}')
-              if r.ok:
-                  print('Deployed via PATCH+updateMask. Done.')
-                  sys.exit(0)
-
-          # 3. Fallback: DELETE release + POST (re-create) with new rulesetName
-          print('PATCH failed – trying DELETE + POST (re-create)...')
-          r = requests.delete(base + '/releases/cloud.firestore', headers=hdrs)
-          print('DELETE:', r.status_code, r.text[:100])
+          requests.delete(base + '/releases/cloud.firestore', headers=hdrs).raise_for_status()
 
           r = requests.post(base + '/releases', headers=hdrs,
               json={'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': rs})
-          print('POST (create release):', r.status_code, r.text[:300])
-          if r.ok:
-              print('Deployed via DELETE+POST. Done.')
-              sys.exit(0)
-
-          print('All strategies failed.')
-          sys.exit(1)
+          r.raise_for_status()
+          print('Release updated:', r.json().get('rulesetName'))
+          print('Firestore rules deployed successfully.')
           PYEOF
 
       # Live-Deployment (nur auf main)
