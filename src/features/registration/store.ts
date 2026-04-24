@@ -13,7 +13,7 @@ import {
 import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
-import { writeAuditLog, buildRegistrationSummary } from '@/lib/firebase/auditLog'
+import { writeAuditLog, buildRegistrationSummary, buildUpdateSummary } from '@/lib/firebase/auditLog'
 import { useAuthStore } from '@/features/auth/store'
 
 export const FOOD_LIMIT_DEFAULT = 15
@@ -140,7 +140,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       action: 'update',
       entityId: id,
       familyName: merged.familyName,
-      summary: buildRegistrationSummary(merged),
+      summary: existing ? buildUpdateSummary(existing as any, data as any) : buildRegistrationSummary(merged),
       performedBy,
     })
   },
