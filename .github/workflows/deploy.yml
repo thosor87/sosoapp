@@ -58,34 +58,35 @@ jobs:
           hdrs = {'Authorization': 'Bearer ' + creds.token, 'Content-Type': 'application/json'}
           base = 'https://firebaserules.googleapis.com/v1/projects/' + pid
 
-          # 1. GET current release to learn the exact field names the API uses
-          r = requests.get(base + '/releases/cloud.firestore', headers=hdrs)
-          print('GET release status:', r.status_code)
-          print('GET release body:', r.text[:500])
-
-          # 2. Create new ruleset
+          # 1. Create new ruleset
           r = requests.post(base + '/rulesets', headers=hdrs,
               json={'source': {'files': [{'name': 'firestore.rules', 'content': rules}]}})
           r.raise_for_status()
-          new_ruleset = r.json()['name']
-          print('Ruleset created:', new_ruleset)
+          rs = r.json()['name']
+          print('Ruleset created:', rs)
 
-          # 3. PATCH – try every plausible field-name variant until one works
-          patch_url = base + '/releases/cloud.firestore'
-          attempts = [
-              {'rulesetName': new_ruleset},
-              {'ruleset_name': new_ruleset},
-              {'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': new_ruleset},
-              {'name': 'projects/' + pid + '/releases/cloud.firestore', 'ruleset_name': new_ruleset},
-          ]
-          for body in attempts:
-              r = requests.patch(patch_url, headers=hdrs, json=body)
-              print(f'PATCH {list(body.keys())} → {r.status_code}: {r.text[:200]}')
+          # 2. Try PATCH with updateMask (field-mask variants)
+          for mask, body_key in [('rulesetName', 'rulesetName'), ('ruleset_name', 'ruleset_name')]:
+              r = requests.patch(base + '/releases/cloud.firestore',
+                  params={'updateMask': mask}, headers=hdrs, json={body_key: rs})
+              print(f'PATCH updateMask={mask} → {r.status_code}')
               if r.ok:
-                  print('SUCCESS – Firestore rules deployed.')
+                  print('Deployed via PATCH+updateMask. Done.')
                   sys.exit(0)
 
-          print('All PATCH variants failed – see output above.')
+          # 3. Fallback: DELETE release + POST (re-create) with new rulesetName
+          print('PATCH failed – trying DELETE + POST (re-create)...')
+          r = requests.delete(base + '/releases/cloud.firestore', headers=hdrs)
+          print('DELETE:', r.status_code, r.text[:100])
+
+          r = requests.post(base + '/releases', headers=hdrs,
+              json={'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': rs})
+          print('POST (create release):', r.status_code, r.text[:300])
+          if r.ok:
+              print('Deployed via DELETE+POST. Done.')
+              sys.exit(0)
+
+          print('All strategies failed.')
           sys.exit(1)
           PYEOF
 
