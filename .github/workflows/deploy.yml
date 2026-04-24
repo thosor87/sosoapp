@@ -63,14 +63,22 @@ jobs:
           ruleset = r.json()['name']
           print('Ruleset created:', ruleset)
 
-          # 2. Release auf neues Ruleset zeigen lassen
-          # Release existiert → PATCH. name aus Body weglassen (kommt aus URL-Pfad-Binding).
-          r = requests.patch(base + '/releases/cloud.firestore',
-              headers=hdrs,
-              params={'updateMask': 'rulesetName'},
-              json={'rulesetName': ruleset})
-          print('PATCH status:', r.status_code, r.text[:400])
-          r.raise_for_status()
+          # 2. Release auf neues Ruleset zeigen lassen – alle Varianten probieren
+          variants = [
+              ({'updateMask': 'rulesetName'},  {'rulesetName': ruleset}),
+              ({'updateMask': 'ruleset_name'}, {'rulesetName': ruleset}),
+              ({},                             {'rulesetName': ruleset}),
+              ({},                             {'name': 'projects/' + pid + '/releases/cloud.firestore', 'rulesetName': ruleset}),
+          ]
+          deployed = False
+          for params, body in variants:
+              r = requests.patch(base + '/releases/cloud.firestore', headers=hdrs, params=params, json=body)
+              print(f'PATCH params={list(params.keys())} status={r.status_code}: {r.text[:200]}')
+              if r.status_code == 200:
+                  deployed = True
+                  break
+          if not deployed:
+              raise SystemExit('All PATCH variants failed – see output above')
           print('Firestore rules deployed successfully')
           PYEOF
 
