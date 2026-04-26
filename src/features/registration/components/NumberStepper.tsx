@@ -35,12 +35,12 @@ export function NumberStepper({
           {label}
         </label>
       )}
-      <div className="inline-flex items-center gap-3 rounded-xl border border-warm-200 bg-white px-2 py-1.5">
+      <div className="flex items-center gap-3 rounded-xl border border-warm-200 bg-white px-2 py-1.5 w-full">
         <button
           type="button"
           onClick={decrement}
           disabled={value <= min}
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <svg
             width="16"
@@ -55,7 +55,7 @@ export function NumberStepper({
           </svg>
         </button>
 
-        <div className="relative w-10 text-center overflow-hidden">
+        <div className="relative flex-1 text-center overflow-hidden">
           <AnimatePresence mode="popLayout">
             <motion.span
               key={value}
@@ -74,7 +74,7 @@ export function NumberStepper({
           type="button"
           onClick={increment}
           disabled={value >= max}
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <svg
             width="16"

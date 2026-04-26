@@ -558,7 +558,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <NumberStepper label="Anzahl Zelte" value={formData.camping.tentCount} onChange={(v) => updateCamping('tentCount', v)} min={1} max={10} error={errors.tentCount} />
-                        <NumberStepper label="Personen zelten" value={formData.camping.personCount} onChange={(v) => updateCamping('personCount', v)} min={1} max={50} />
+                        <NumberStepper label="Personen" value={formData.camping.personCount} onChange={(v) => updateCamping('personCount', v)} min={1} max={50} />
                       </div>
                       <Textarea label="Anmerkungen zum Zelten" value={formData.camping.notes} onChange={(e) => updateCamping('notes', e.target.value)} placeholder="z.B. Besondere Wünsche zum Zelten" />
                     </motion.div>
