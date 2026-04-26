@@ -364,7 +364,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden flex flex-col max-h-[88vh]">
       {/* Step Indicator */}
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-2">
@@ -410,7 +410,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       </div>
 
       {/* Step Content */}
-      <div className="px-6 pb-6 min-h-[320px] relative overflow-hidden">
+      <div className="px-6 pb-4 flex-1 overflow-y-auto min-h-0 relative">
         <AnimatePresence mode="wait" custom={direction}>
           {step === 0 && (
             <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeInOut' }} className="space-y-5">
@@ -648,7 +648,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       )}
 
       {/* Navigation */}
-      <div className="px-6 pb-6 flex items-center justify-between gap-3">
+      <div className="px-6 py-4 flex items-center justify-between gap-3 border-t border-warm-100 bg-white">
         {step > 0 ? <Button variant="ghost" onClick={goBack} type="button">Zurück</Button> : <div />}
         {step < 3 ? (
           <Button onClick={goNext} type="button">Weiter</Button>
