@@ -40,7 +40,7 @@ export function NumberStepper({
           type="button"
           onClick={decrement}
           disabled={value <= min}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <svg
             width="16"
@@ -74,7 +74,7 @@ export function NumberStepper({
           type="button"
           onClick={increment}
           disabled={value >= max}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-warm-100 text-warm-600 transition-all duration-200 hover:bg-primary-100 hover:text-primary-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <svg
             width="16"
