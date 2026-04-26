@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { useAuthStore } from '@/features/auth/store'
+import { sha256hex } from '@/lib/utils/sha256'
 import { useToastStore } from '@/components/feedback/Toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -91,7 +92,7 @@ export function EventSettings() {
     try {
       const docRef = doc(db, 'events', eventId)
       await updateDoc(docRef, {
-        adminPasswordHash: newPassword,
+        adminPasswordHash: await sha256hex(newPassword),
         updatedAt: serverTimestamp(),
       })
       addToast('Admin-Passwort geändert', 'success')

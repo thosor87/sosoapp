@@ -102,7 +102,7 @@ export function buildUpdateSummary(before: RegistrationSnapshot, after: Partial<
   if (after.contactName !== undefined && after.contactName !== before.contactName)
     changes.push(`Kontakt: ${before.contactName} → ${after.contactName}`)
   if (after.email !== undefined && after.email !== before.email)
-    changes.push(`E-Mail: ${before.email} → ${after.email}`)
+    changes.push('E-Mail geändert')
   if (after.adultsCount !== undefined && after.adultsCount !== before.adultsCount)
     changes.push(`Erwachsene: ${before.adultsCount} → ${after.adultsCount}`)
   if (after.childrenCount !== undefined && after.childrenCount !== before.childrenCount)

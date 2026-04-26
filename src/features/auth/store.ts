@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import type { EventConfig } from '@/lib/firebase/types'
+import { sha256hex } from '@/lib/utils/sha256'
 
 interface AuthState {
   accessToken: string | null
@@ -94,7 +95,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { eventConfig } = get()
     if (!eventConfig) return false
 
-    if (password === eventConfig.adminPasswordHash) {
+    const hashed = await sha256hex(password)
+    const stored = eventConfig.adminPasswordHash ?? ''
+    // support both legacy plaintext and new SHA-256 hashes
+    const match = stored.length === 64 ? hashed === stored : password === stored
+    if (match) {
       sessionStorage.setItem('soso-admin', 'true')
       set({ isAdmin: true })
       return true
