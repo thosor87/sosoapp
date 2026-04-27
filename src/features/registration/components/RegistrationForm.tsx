@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -13,6 +13,7 @@ import { validateStep1, validateStep2, validateStep3 } from '@/features/registra
 import { NumberStepper } from './NumberStepper'
 import type { Registration } from '@/lib/firebase/types'
 import { sendConfirmationEmail, sendUpdateEmail, sendDeletionEmail } from '@/lib/firebase/sendConfirmationEmail'
+import { getPrivateEmail } from '@/lib/firebase/privateData'
 
 interface RegistrationFormProps {
   editRegistration?: Registration
@@ -54,7 +55,7 @@ function getInitialData(reg?: Registration): FormData {
     return {
       familyName: reg.familyName,
       contactName: reg.contactName,
-      email: reg.email ?? '',
+      email: '',
       adultsCount: reg.adultsCount,
       childrenCount: reg.childrenCount,
       food: {
@@ -115,6 +116,14 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   const [isDeleting, setIsDeleting] = useState(false)
 
   const isEditing = !!editRegistration
+
+  // Fetch email from private subcollection when editing
+  useEffect(() => {
+    if (!editRegistration?.id) return
+    getPrivateEmail(editRegistration.id)
+      .then((email) => setFormData((prev) => ({ ...prev, email })))
+      .catch(() => {})
+  }, [editRegistration?.id])
 
   // Food counts (excluding current edit)
   const foodCounts = useMemo(() => {
@@ -229,10 +238,10 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     if (!eventId) return
     setIsSubmitting(true)
     try {
+      const email = formData.email.trim()
       const registrationData = {
         familyName: formData.familyName,
         contactName: formData.contactName,
-        email: formData.email.trim(),
         adultsCount: formData.adultsCount,
         childrenCount: formData.childrenCount,
         food: formData.food,
@@ -241,20 +250,20 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       }
 
       if (isEditing && editRegistration) {
-        await updateRegistration(editRegistration.id, registrationData)
-        if (registrationData.email && accessToken) {
+        await updateRegistration(editRegistration.id, registrationData, email)
+        if (email && accessToken) {
           sendUpdateEmail(
-            { ...registrationData, id: editRegistration.id },
+            { ...registrationData, id: editRegistration.id, email },
             accessToken
           ).catch((err) => console.error('Update email failed:', err))
         }
         addToast('Änderungen gespeichert!', 'success')
         onClose?.()
       } else {
-        const regId = await createRegistration({ eventId, ...registrationData })
-        if (registrationData.email && accessToken) {
+        const regId = await createRegistration({ eventId, ...registrationData }, email)
+        if (email && accessToken) {
           sendConfirmationEmail(
-            { ...registrationData, id: regId },
+            { ...registrationData, id: regId, email },
             accessToken
           ).catch((err) => console.error('Email send failed:', err))
         }
@@ -278,7 +287,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     if (!editRegistration) return
     setIsDeleting(true)
     try {
-      const email = editRegistration.email ?? formData.email.trim()
+      const email = formData.email.trim()
       if (email) {
         sendDeletionEmail({
           id: editRegistration.id,

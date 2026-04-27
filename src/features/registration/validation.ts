@@ -5,7 +5,7 @@ type ValidationResult = {
   errors: Record<string, string>
 }
 
-type Step1Data = Pick<Registration, 'familyName' | 'contactName' | 'email' | 'adultsCount'>
+type Step1Data = Pick<Registration, 'familyName' | 'contactName' | 'adultsCount'> & { email: string }
 
 export function validateStep1(data: Step1Data): ValidationResult {
   const errors: Record<string, string> = {}

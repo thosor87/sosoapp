@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
 import { writeAuditLog, buildRegistrationSummary } from '@/lib/firebase/auditLog'
+import { setPrivateEmail, deletePrivateContact } from '@/lib/firebase/privateData'
 import { useAuthStore } from '@/features/auth/store'
 
 export const FOOD_LIMIT_DEFAULT = 15
@@ -28,11 +29,13 @@ interface RegistrationState {
   subscribeToRegistrations: (eventId: string) => () => void
   createRegistration: (
     data: Omit<Registration, 'id' | 'createdAt' | 'updatedAt'>,
+    email: string,
     performedBy?: 'user' | 'admin'
   ) => Promise<string>
   updateRegistration: (
     id: string,
     data: Partial<Registration>,
+    email: string,
     performedBy?: 'user' | 'admin'
   ) => Promise<void>
   deleteRegistration: (
@@ -74,7 +77,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     return unsubscribe
   },
 
-  createRegistration: async (data, performedBy = 'user') => {
+  createRegistration: async (data, email, performedBy = 'user') => {
     const current = get().registrations
     const limit = getFoodLimit()
     const cakeCount = current.filter((r) => r.food.bringsCake).length
@@ -93,6 +96,13 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       updatedAt: serverTimestamp(),
     })
 
+    // Store email in private subcollection to keep it out of the public document
+    if (email) {
+      setPrivateEmail(docRef.id, email).catch((err) =>
+        console.error('Failed to write private email:', err)
+      )
+    }
+
     writeAuditLog({
       eventId: data.eventId,
       action: 'create',
@@ -105,7 +115,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     return docRef.id
   },
 
-  updateRegistration: async (id, data, performedBy = 'user') => {
+  updateRegistration: async (id, data, email, performedBy = 'user') => {
     const existing = get().registrations.find((r) => r.id === id)
     const current = get().registrations
 
@@ -129,6 +139,12 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       updatedAt: serverTimestamp(),
     })
 
+    if (email) {
+      setPrivateEmail(id, email).catch((err) =>
+        console.error('Failed to update private email:', err)
+      )
+    }
+
     const merged = { ...existing, ...data } as Registration
     writeAuditLog({
       eventId: merged.eventId,
@@ -144,6 +160,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     const existing = get().registrations.find((r) => r.id === id)
     try {
       await deleteDoc(doc(db, 'registrations', id))
+      deletePrivateContact(id)
       if (existing) {
         writeAuditLog({
           eventId: existing.eventId,

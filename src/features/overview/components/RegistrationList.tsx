@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useAuthStore } from '@/features/auth/store'
 import { sendEditLinkEmail } from '@/lib/firebase/sendConfirmationEmail'
+import { getPrivateEmail } from '@/lib/firebase/privateData'
 
 export function RegistrationList() {
   const registrations = useRegistrationStore((s) => s.registrations)
@@ -35,7 +36,8 @@ export function RegistrationList() {
     setConfirmingId(null)
     setSendingId(confirmingId)
     try {
-      await sendEditLinkEmail(reg, accessToken)
+      const email = await getPrivateEmail(reg.id)
+      await sendEditLinkEmail({ ...reg, email }, accessToken)
       setSentIds((prev) => new Set(prev).add(reg.id))
       setTimeout(() => {
         setSentIds((prev) => {

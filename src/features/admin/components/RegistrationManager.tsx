@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { deleteDoc, doc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
+import { getPrivateEmail, deletePrivateContact } from '@/lib/firebase/privateData'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { Button } from '@/components/ui/Button'
@@ -71,6 +72,7 @@ export function RegistrationManager() {
     setIsDeleting(true)
     try {
       await deleteDoc(doc(db, 'registrations', id))
+      deletePrivateContact(id)
       addToast('Anmeldung gelöscht', 'success')
       setDeleteConfirmId(null)
     } catch (error) {
@@ -81,7 +83,7 @@ export function RegistrationManager() {
     }
   }
 
-  const handleCSVExport = () => {
+  const handleCSVExport = async () => {
     const headers = [
       'Haushalt/Familie',
       'Ansprechpartner',
@@ -108,10 +110,16 @@ export function RegistrationManager() {
         ? ts.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         : ''
 
-    const rows = registrations.map((r) => [
+    // Fetch emails from private subcollections in parallel
+    const emailResults = await Promise.allSettled(
+      registrations.map((r) => getPrivateEmail(r.id))
+    )
+    const emails = emailResults.map((r) => (r.status === 'fulfilled' ? r.value : ''))
+
+    const rows = registrations.map((r, i) => [
       r.familyName,
       r.contactName,
-      r.email,
+      emails[i],
       r.adultsCount,
       r.childrenCount,
       r.adultsCount + r.childrenCount,
