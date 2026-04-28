@@ -55,15 +55,15 @@ export function NumberStepper({
           </svg>
         </button>
 
-        <div className="relative w-10 text-center overflow-hidden">
+        <div className="relative w-12 h-9 flex items-center justify-center">
           <AnimatePresence mode="popLayout">
             <motion.span
               key={value}
-              initial={{ y: 12, opacity: 0 }}
+              initial={{ y: 8, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -12, opacity: 0 }}
+              exit={{ y: -8, opacity: 0 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="block text-xl font-bold text-warm-800 tabular-nums"
+              className="block text-xl font-bold text-warm-800 tabular-nums select-none"
             >
               {value}
             </motion.span>
