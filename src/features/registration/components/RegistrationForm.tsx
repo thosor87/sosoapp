@@ -206,7 +206,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const goNext = () => {
     let result = { valid: true, errors: {} as Record<string, string> }
-    if (step === 0) result = validateStep1(formData, { isEditing })
+    if (step === 0) result = validateStep1(formData)
     else if (step === 1) result = validateStep2(formData)
     else if (step === 2) result = validateStep3(formData)
 
@@ -422,7 +422,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
               <Input label="Ansprechpartner" value={formData.contactName} onChange={(e) => updateField('contactName', e.target.value)} placeholder="Vorname" error={errors.contactName} />
               <div>
                 <Input
-                  label={isEditing ? 'E-Mail (optional)' : 'E-Mail'}
+                  label="E-Mail"
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
@@ -431,7 +431,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                 />
                 <p className="text-xs text-warm-400 mt-1">
                   {isEditing
-                    ? 'Nur ausfüllen, wenn du eine Bestätigungsmail für diese Änderung möchtest'
+                    ? 'Du bekommst eine Bestätigung. Die Adresse kann sich gegenüber der ersten Anmeldung unterscheiden.'
                     : 'Du bekommst eine Bestätigung mit Bearbeitungslink'}
                 </p>
               </div>

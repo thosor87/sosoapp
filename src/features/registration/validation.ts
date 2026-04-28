@@ -7,7 +7,7 @@ type ValidationResult = {
 
 type Step1Data = Pick<Registration, 'familyName' | 'contactName' | 'adultsCount'> & { email: string }
 
-export function validateStep1(data: Step1Data, options?: { isEditing?: boolean }): ValidationResult {
+export function validateStep1(data: Step1Data): ValidationResult {
   const errors: Record<string, string> = {}
 
   if (!data.familyName.trim()) {
@@ -18,16 +18,9 @@ export function validateStep1(data: Step1Data, options?: { isEditing?: boolean }
     errors.contactName = 'Ansprechpartner ist erforderlich'
   }
 
-  if (!options?.isEditing) {
-    if (!data.email || !data.email.trim()) {
-      errors.email = 'E-Mail-Adresse ist erforderlich'
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(data.email.trim())) {
-        errors.email = 'Bitte gib eine gültige E-Mail-Adresse ein'
-      }
-    }
-  } else if (data.email.trim()) {
+  if (!data.email || !data.email.trim()) {
+    errors.email = 'E-Mail-Adresse ist erforderlich'
+  } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(data.email.trim())) {
       errors.email = 'Bitte gib eine gültige E-Mail-Adresse ein'
