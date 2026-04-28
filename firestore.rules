@@ -47,8 +47,8 @@ service cloud.firestore {
       // (Firestore-IDs sind zufällig; die ID ist nur im Bestätigungsmail enthalten)
       match /private/{doc} {
         allow read: if true;
-        allow create, update: if request.resource.data.email is string
-                              && request.resource.data.email.size() <= 200;
+        allow create, update: if request.resource.data.emailHash is string
+                              && request.resource.data.emailHash.size() == 64;
         allow delete: if true;
       }
     }
