@@ -6,15 +6,15 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
-  deleteDoc,
   doc,
   serverTimestamp,
+  deleteField,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
 import { writeAuditLog, buildRegistrationSummary } from '@/lib/firebase/auditLog'
-import { setPrivateEmail, deletePrivateContact } from '@/lib/firebase/privateData'
+import { setPrivateEmail } from '@/lib/firebase/privateData'
 import { useAuthStore } from '@/features/auth/store'
 
 export const FOOD_LIMIT_DEFAULT = 15
@@ -25,6 +25,7 @@ function getFoodLimit(): number {
 
 interface RegistrationState {
   registrations: Registration[]
+  deletedRegistrations: Registration[]
   isLoading: boolean
   subscribeToRegistrations: (eventId: string) => () => void
   createRegistration: (
@@ -42,11 +43,16 @@ interface RegistrationState {
     id: string,
     performedBy?: 'user' | 'admin'
   ) => Promise<void>
+  restoreRegistration: (
+    id: string,
+    performedBy?: 'user' | 'admin'
+  ) => Promise<void>
   getRegistration: (id: string) => Registration | undefined
 }
 
 export const useRegistrationStore = create<RegistrationState>((set, get) => ({
   registrations: [],
+  deletedRegistrations: [],
   isLoading: true,
 
   subscribeToRegistrations: (eventId: string) => {
@@ -57,16 +63,16 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const registrations = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        })) as Registration[]
-        registrations.sort((a, b) => {
-          const aTime = a.createdAt?.seconds ?? 0
-          const bTime = b.createdAt?.seconds ?? 0
-          return bTime - aTime
+        const all = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Registration[]
+        const byNewest = (a: Registration, b: Registration) =>
+          (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
+        set({
+          registrations: all.filter((r) => !r.isDeleted).sort(byNewest),
+          deletedRegistrations: all.filter((r) => r.isDeleted).sort((a, b) =>
+            (b.deletedAt?.seconds ?? 0) - (a.deletedAt?.seconds ?? 0)
+          ),
+          isLoading: false,
         })
-        set({ registrations, isLoading: false })
       },
       (error) => {
         console.error('Registration subscription error:', error)
@@ -159,8 +165,10 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
   deleteRegistration: async (id, performedBy = 'user') => {
     const existing = get().registrations.find((r) => r.id === id)
     try {
-      await deleteDoc(doc(db, 'registrations', id))
-      deletePrivateContact(id)
+      await updateDoc(doc(db, 'registrations', id), {
+        isDeleted: true,
+        deletedAt: serverTimestamp(),
+      })
       if (existing) {
         writeAuditLog({
           eventId: existing.eventId,
@@ -175,6 +183,30 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     } catch (error) {
       console.error('Error deleting registration:', error)
       useToastStore.getState().addToast('Fehler beim Löschen der Anmeldung', 'error')
+    }
+  },
+
+  restoreRegistration: async (id, performedBy = 'admin') => {
+    const existing = get().deletedRegistrations.find((r) => r.id === id)
+    try {
+      await updateDoc(doc(db, 'registrations', id), {
+        isDeleted: deleteField(),
+        deletedAt: deleteField(),
+      })
+      if (existing) {
+        writeAuditLog({
+          eventId: existing.eventId,
+          action: 'restore',
+          entityId: id,
+          familyName: existing.familyName,
+          summary: buildRegistrationSummary(existing),
+          performedBy,
+        })
+      }
+      useToastStore.getState().addToast('Anmeldung wiederhergestellt', 'success')
+    } catch (error) {
+      console.error('Error restoring registration:', error)
+      useToastStore.getState().addToast('Fehler beim Wiederherstellen', 'error')
     }
   },
 

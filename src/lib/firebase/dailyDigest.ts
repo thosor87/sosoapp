@@ -23,7 +23,8 @@ function buildDigestHtml(logs: AuditLog[], date: Date): string {
   const actionLabel = (action: string) => {
     if (action === 'create') return '✅ Neu'
     if (action === 'update') return '✏️ Geändert'
-    if (action === 'delete') return '🗑️ Gelöscht'
+    if (action === 'delete') return '🗑️ Zurückgezogen'
+    if (action === 'restore') return '↩️ Wiederhergestellt'
     return action
   }
 

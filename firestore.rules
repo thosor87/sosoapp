@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // ── Registrierungen ─────────────────────────────────────
     // Lesen: alle | Erstellen/Ändern: mit Typ- und Wertevalidierung
-    // Löschen: erlaubt (für "Wieder abmelden")
+    // Löschen: VERBOTEN – Abmeldungen werden per Soft-Delete (isDeleted=true) versteckt
     // E-Mail ist NICHT im Hauptdokument – sie liegt in private/contact
     match /registrations/{regId} {
       allow read: if true;
@@ -41,7 +41,7 @@ service cloud.firestore {
                     && request.resource.data.childrenCount is number
                     && request.resource.data.childrenCount >= 0
                     && request.resource.data.childrenCount <= 50;
-      allow delete: if true;
+      allow delete: if false;
 
       // E-Mail in privater Subcollection – nur per bekannter Dokument-ID zugänglich
       // (Firestore-IDs sind zufällig; die ID ist nur im Bestätigungsmail enthalten)

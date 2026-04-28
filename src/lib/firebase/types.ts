@@ -39,6 +39,8 @@ export interface Registration {
   food: FoodContribution
   camping: CampingInfo
   comments: string
+  isDeleted?: boolean
+  deletedAt?: Timestamp
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -52,7 +54,7 @@ export interface FoodContribution {
   otherDescription?: string
 }
 
-export type AuditAction = 'create' | 'update' | 'delete'
+export type AuditAction = 'create' | 'update' | 'delete' | 'restore'
 
 export interface AuditLog {
   id: string
