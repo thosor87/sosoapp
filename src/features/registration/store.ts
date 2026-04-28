@@ -6,14 +6,15 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
-  deleteDoc,
   doc,
   serverTimestamp,
+  deleteField,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
-import { writeAuditLog, buildRegistrationSummary, buildUpdateSummary } from '@/lib/firebase/auditLog'
+import { writeAuditLog, buildRegistrationSummary } from '@/lib/firebase/auditLog'
+import { setPrivateEmailHash } from '@/lib/firebase/privateData'
 import { useAuthStore } from '@/features/auth/store'
 
 export const FOOD_LIMIT_DEFAULT = 15
@@ -27,18 +28,25 @@ function getSaladLimit(): number {
 
 interface RegistrationState {
   registrations: Registration[]
+  deletedRegistrations: Registration[]
   isLoading: boolean
   subscribeToRegistrations: (eventId: string) => () => void
   createRegistration: (
     data: Omit<Registration, 'id' | 'createdAt' | 'updatedAt'>,
+    email: string,
     performedBy?: 'user' | 'admin'
   ) => Promise<string>
   updateRegistration: (
     id: string,
     data: Partial<Registration>,
+    email: string,
     performedBy?: 'user' | 'admin'
   ) => Promise<void>
   deleteRegistration: (
+    id: string,
+    performedBy?: 'user' | 'admin'
+  ) => Promise<void>
+  restoreRegistration: (
     id: string,
     performedBy?: 'user' | 'admin'
   ) => Promise<void>
@@ -47,6 +55,7 @@ interface RegistrationState {
 
 export const useRegistrationStore = create<RegistrationState>((set, get) => ({
   registrations: [],
+  deletedRegistrations: [],
   isLoading: true,
 
   subscribeToRegistrations: (eventId: string) => {
@@ -57,16 +66,16 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const registrations = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        })) as Registration[]
-        registrations.sort((a, b) => {
-          const aTime = a.createdAt?.seconds ?? 0
-          const bTime = b.createdAt?.seconds ?? 0
-          return bTime - aTime
+        const all = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Registration[]
+        const byNewest = (a: Registration, b: Registration) =>
+          (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
+        set({
+          registrations: all.filter((r) => !r.isDeleted).sort(byNewest),
+          deletedRegistrations: all.filter((r) => r.isDeleted).sort((a, b) =>
+            (b.deletedAt?.seconds ?? 0) - (a.deletedAt?.seconds ?? 0)
+          ),
+          isLoading: false,
         })
-        set({ registrations, isLoading: false })
       },
       (error) => {
         console.error('Registration subscription error:', error)
@@ -77,7 +86,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     return unsubscribe
   },
 
-  createRegistration: async (data, performedBy = 'user') => {
+  createRegistration: async (data, email, performedBy = 'user') => {
     const current = get().registrations
     const cakeLimit = getCakeLimit()
     const saladLimit = getSaladLimit()
@@ -97,6 +106,13 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       updatedAt: serverTimestamp(),
     })
 
+    // Store email in private subcollection to keep it out of the public document
+    if (email) {
+      setPrivateEmailHash(docRef.id, email).catch((err) =>
+        console.error('Failed to write private email:', err)
+      )
+    }
+
     writeAuditLog({
       eventId: data.eventId,
       action: 'create',
@@ -109,7 +125,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     return docRef.id
   },
 
-  updateRegistration: async (id, data, performedBy = 'user') => {
+  updateRegistration: async (id, data, email, performedBy = 'user') => {
     const existing = get().registrations.find((r) => r.id === id)
     const current = get().registrations
 
@@ -134,13 +150,19 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       updatedAt: serverTimestamp(),
     })
 
+    if (email) {
+      setPrivateEmailHash(id, email).catch((err) =>
+        console.error('Failed to update private email:', err)
+      )
+    }
+
     const merged = { ...existing, ...data } as Registration
     writeAuditLog({
       eventId: merged.eventId,
       action: 'update',
       entityId: id,
       familyName: merged.familyName,
-      summary: existing ? buildUpdateSummary(existing as any, data as any) : buildRegistrationSummary(merged),
+      summary: buildRegistrationSummary(merged),
       performedBy,
     })
   },
@@ -148,7 +170,10 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
   deleteRegistration: async (id, performedBy = 'user') => {
     const existing = get().registrations.find((r) => r.id === id)
     try {
-      await deleteDoc(doc(db, 'registrations', id))
+      await updateDoc(doc(db, 'registrations', id), {
+        isDeleted: true,
+        deletedAt: serverTimestamp(),
+      })
       if (existing) {
         writeAuditLog({
           eventId: existing.eventId,
@@ -163,6 +188,30 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     } catch (error) {
       console.error('Error deleting registration:', error)
       useToastStore.getState().addToast('Fehler beim Löschen der Anmeldung', 'error')
+    }
+  },
+
+  restoreRegistration: async (id, performedBy = 'admin') => {
+    const existing = get().deletedRegistrations.find((r) => r.id === id)
+    try {
+      await updateDoc(doc(db, 'registrations', id), {
+        isDeleted: deleteField(),
+        deletedAt: deleteField(),
+      })
+      if (existing) {
+        writeAuditLog({
+          eventId: existing.eventId,
+          action: 'restore',
+          entityId: id,
+          familyName: existing.familyName,
+          summary: buildRegistrationSummary(existing),
+          performedBy,
+        })
+      }
+      useToastStore.getState().addToast('Anmeldung wiederhergestellt', 'success')
+    } catch (error) {
+      console.error('Error restoring registration:', error)
+      useToastStore.getState().addToast('Fehler beim Wiederherstellen', 'error')
     }
   },
 

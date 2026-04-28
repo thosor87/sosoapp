@@ -54,7 +54,7 @@ function getInitialData(reg?: Registration): FormData {
     return {
       familyName: reg.familyName,
       contactName: reg.contactName,
-      email: reg.email ?? '',
+      email: '',
       adultsCount: reg.adultsCount,
       childrenCount: reg.childrenCount,
       food: {
@@ -206,7 +206,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const goNext = () => {
     let result = { valid: true, errors: {} as Record<string, string> }
-    if (step === 0) result = validateStep1(formData)
+    if (step === 0) result = validateStep1(formData, { isEditing })
     else if (step === 1) result = validateStep2(formData)
     else if (step === 2) result = validateStep3(formData)
 
@@ -227,10 +227,10 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     if (!eventId) return
     setIsSubmitting(true)
     try {
+      const email = formData.email.trim()
       const registrationData = {
         familyName: formData.familyName,
         contactName: formData.contactName,
-        email: formData.email.trim(),
         adultsCount: formData.adultsCount,
         childrenCount: formData.childrenCount,
         food: formData.food,
@@ -239,20 +239,20 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       }
 
       if (isEditing && editRegistration) {
-        await updateRegistration(editRegistration.id, registrationData)
-        if (registrationData.email && accessToken) {
+        await updateRegistration(editRegistration.id, registrationData, email)
+        if (email && accessToken) {
           sendUpdateEmail(
-            { ...registrationData, id: editRegistration.id },
+            { ...registrationData, id: editRegistration.id, email },
             accessToken
           ).catch((err) => console.error('Update email failed:', err))
         }
         addToast('Änderungen gespeichert!', 'success')
         onClose?.()
       } else {
-        const regId = await createRegistration({ eventId, ...registrationData })
-        if (registrationData.email && accessToken) {
+        const regId = await createRegistration({ eventId, ...registrationData }, email)
+        if (email && accessToken) {
           sendConfirmationEmail(
-            { ...registrationData, id: regId },
+            { ...registrationData, id: regId, email },
             accessToken
           ).catch((err) => console.error('Email send failed:', err))
         }
@@ -276,7 +276,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     if (!editRegistration) return
     setIsDeleting(true)
     try {
-      const email = editRegistration.email ?? formData.email.trim()
+      const email = formData.email.trim()
       if (email) {
         sendDeletionEmail({
           id: editRegistration.id,
@@ -421,8 +421,19 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
               <Input label="Haushalt/Familie" value={formData.familyName} onChange={(e) => updateField('familyName', e.target.value)} placeholder="z.B. Sorings im Norden" error={errors.familyName} />
               <Input label="Ansprechpartner" value={formData.contactName} onChange={(e) => updateField('contactName', e.target.value)} placeholder="Vorname" error={errors.contactName} />
               <div>
-                <Input label="E-Mail" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="fuer-bestaetigung@beispiel.de" error={errors.email} />
-                <p className="text-xs text-warm-400 mt-1">Du bekommst eine Bestätigung mit Bearbeitungslink</p>
+                <Input
+                  label={isEditing ? 'E-Mail (optional)' : 'E-Mail'}
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  placeholder="fuer-bestaetigung@beispiel.de"
+                  error={errors.email}
+                />
+                <p className="text-xs text-warm-400 mt-1">
+                  {isEditing
+                    ? 'Nur ausfüllen, wenn du eine Bestätigungsmail für diese Änderung möchtest'
+                    : 'Du bekommst eine Bestätigung mit Bearbeitungslink'}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <NumberStepper label="Erwachsene" value={formData.adultsCount} onChange={(v) => updateField('adultsCount', v)} min={1} max={20} error={errors.adultsCount} />

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { Button } from '@/components/ui/Button'
@@ -12,13 +12,16 @@ const LAST_VISIT_KEY = 'soso-admin-last-registrations-visit'
 
 export function RegistrationManager() {
   const registrations = useRegistrationStore((s) => s.registrations)
-  const deleteRegistration = useRegistrationStore((s) => s.deleteRegistration)
+  const deletedRegistrations = useRegistrationStore((s) => s.deletedRegistrations)
+  const restoreRegistration = useRegistrationStore((s) => s.restoreRegistration)
   const addToast = useToastStore((s) => s.addToast)
 
   const [search, setSearch] = useState('')
   const [editReg, setEditReg] = useState<Registration | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleted, setShowDeleted] = useState(false)
+  const [restoringId, setRestoringId] = useState<string | null>(null)
 
   // "New" indicator: registrations created after last visit
   const lastVisitRef = useRef<number>(
@@ -69,6 +72,8 @@ export function RegistrationManager() {
   const handleDelete = async (id: string) => {
     setIsDeleting(true)
     try {
+      // Soft-delete: keeps the doc with isDeleted=true, no hard deleteDoc
+      const { deleteRegistration } = useRegistrationStore.getState()
       await deleteRegistration(id, 'admin')
       setDeleteConfirmId(null)
     } catch (error) {
@@ -79,11 +84,22 @@ export function RegistrationManager() {
     }
   }
 
-  const handleCSVExport = () => {
+  const handleRestore = async (id: string) => {
+    setRestoringId(id)
+    try {
+      await restoreRegistration(id, 'admin')
+    } catch (error) {
+      console.error('Error restoring registration:', error)
+      addToast('Fehler beim Wiederherstellen', 'error')
+    } finally {
+      setRestoringId(null)
+    }
+  }
+
+  const handleCSVExport = async () => {
     const headers = [
       'Haushalt/Familie',
       'Ansprechpartner',
-      'E-Mail',
       'Erwachsene',
       'Kinder',
       'Gesamt',
@@ -109,7 +125,6 @@ export function RegistrationManager() {
     const rows = registrations.map((r) => [
       r.familyName,
       r.contactName,
-      r.email,
       r.adultsCount,
       r.childrenCount,
       r.adultsCount + r.childrenCount,
@@ -294,6 +309,63 @@ export function RegistrationManager() {
           </div>
         </div>
       </div>
+
+      {/* Deleted registrations */}
+      {deletedRegistrations.length > 0 && (
+        <div className="rounded-xl border border-warm-100 bg-white overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowDeleted((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-warm-500 hover:bg-warm-50 transition-colors cursor-pointer"
+          >
+            <span>Zurückgezogene Anmeldungen ({deletedRegistrations.length})</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${showDeleted ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <AnimatePresence>
+            {showDeleted && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="divide-y divide-warm-50 border-t border-warm-100">
+                  {deletedRegistrations.map((reg) => {
+                    const deletedDate = reg.deletedAt?.toDate?.()
+                    const deletedStr = deletedDate
+                      ? deletedDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                      : '–'
+                    return (
+                      <div key={reg.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-warm-600 truncate">{reg.familyName}</p>
+                          <p className="text-xs text-warm-400 truncate">
+                            {reg.contactName} · {reg.adultsCount} Erw., {reg.childrenCount} Kinder · zurückgezogen {deletedStr}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(reg.id)}
+                          disabled={restoringId === reg.id}
+                          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-warm-100 text-warm-600 hover:bg-primary-50 hover:text-primary-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-default"
+                        >
+                          {restoringId === reg.id ? 'Wird wiederhergestellt…' : 'Wiederherstellen'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Edit Modal */}
       <Modal

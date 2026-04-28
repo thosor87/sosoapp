@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useAuthStore } from '@/features/auth/store'
 import { sendEditLinkEmail } from '@/lib/firebase/sendConfirmationEmail'
+import { verifyPrivateEmail } from '@/lib/firebase/privateData'
 
 export function RegistrationList() {
   const registrations = useRegistrationStore((s) => s.registrations)
@@ -14,6 +15,8 @@ export function RegistrationList() {
   const accessToken = useAuthStore((s) => s.accessToken)
   const [search, setSearch] = useState('')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [emailInput, setEmailInput] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [sendingId, setSendingId] = useState<string | null>(null)
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
 
@@ -32,10 +35,24 @@ export function RegistrationList() {
     const reg = registrations.find((r) => r.id === confirmingId)
     if (!reg) return
 
-    setConfirmingId(null)
+    const email = emailInput.trim()
+    if (!email) {
+      setEmailError('Bitte E-Mail-Adresse eingeben')
+      return
+    }
+
     setSendingId(confirmingId)
+    setEmailError('')
     try {
-      await sendEditLinkEmail(reg, accessToken)
+      const verified = await verifyPrivateEmail(reg.id, email)
+      if (!verified) {
+        setEmailError('Diese E-Mail-Adresse stimmt leider nicht überein')
+        setSendingId(null)
+        return
+      }
+      await sendEditLinkEmail({ ...reg, email }, accessToken)
+      setConfirmingId(null)
+      setEmailInput('')
       setSentIds((prev) => new Set(prev).add(reg.id))
       setTimeout(() => {
         setSentIds((prev) => {
@@ -46,6 +63,7 @@ export function RegistrationList() {
       }, 3000)
     } catch (err) {
       console.error('Edit link email failed:', err)
+      setEmailError('Fehler beim Senden. Bitte erneut versuchen.')
     } finally {
       setSendingId(null)
     }
@@ -246,20 +264,29 @@ export function RegistrationList() {
     {/* Bestätigungs-Modal */}
     <Modal
       isOpen={!!confirmingReg}
-      onClose={() => setConfirmingId(null)}
-      title="Bearbeitungslink senden?"
+      onClose={() => { setConfirmingId(null); setEmailInput(''); setEmailError('') }}
+      title="Bearbeitungslink anfordern"
     >
       {confirmingReg && (
-        <div>
-          <p className="text-warm-600 mb-6">
-            Ein Bearbeitungslink wird an die hinterlegte E-Mail-Adresse von{' '}
+        <div className="space-y-4">
+          <p className="text-warm-600">
+            Bitte gib die E-Mail-Adresse ein, mit der{' '}
             <strong className="text-warm-800">{confirmingReg.familyName}</strong>{' '}
-            ({confirmingReg.contactName}) geschickt.
+            ({confirmingReg.contactName}) angemeldet ist. Der Link wird dann dorthin geschickt.
           </p>
-          <div className="flex justify-end gap-3">
+          <Input
+            type="email"
+            label="E-Mail-Adresse"
+            value={emailInput}
+            onChange={(e) => { setEmailInput(e.target.value); setEmailError('') }}
+            placeholder="deine@email.de"
+            error={emailError}
+            autoFocus
+          />
+          <div className="flex justify-end gap-3 pt-1">
             <button
               type="button"
-              onClick={() => setConfirmingId(null)}
+              onClick={() => { setConfirmingId(null); setEmailInput(''); setEmailError('') }}
               className="px-4 py-2 rounded-lg text-warm-600 hover:bg-warm-100 transition-colors cursor-pointer"
             >
               Abbrechen
@@ -267,9 +294,10 @@ export function RegistrationList() {
             <button
               type="button"
               onClick={handleConfirmSend}
-              className="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors cursor-pointer"
+              disabled={!!sendingId}
+              className="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-default"
             >
-              Link senden
+              {sendingId ? 'Wird geprüft…' : 'Link senden'}
             </button>
           </div>
         </div>

@@ -22,7 +22,8 @@ function dateLabel(date: Date): string {
 function actionLabel(action: string): string {
   if (action === 'create') return '✅ Neu'
   if (action === 'update') return '✏️ Geändert'
-  if (action === 'delete') return '🗑️ Gelöscht'
+  if (action === 'delete') return '🗑️ Zurückgezogen'
+  if (action === 'restore') return '↩️ Wiederhergestellt'
   return action
 }
 
