@@ -14,7 +14,7 @@ import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
 import { writeAuditLog, buildRegistrationSummary } from '@/lib/firebase/auditLog'
-import { setPrivateEmail } from '@/lib/firebase/privateData'
+import { setPrivateEmailHash } from '@/lib/firebase/privateData'
 import { useAuthStore } from '@/features/auth/store'
 
 export const FOOD_LIMIT_DEFAULT = 15
@@ -104,7 +104,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
 
     // Store email in private subcollection to keep it out of the public document
     if (email) {
-      setPrivateEmail(docRef.id, email).catch((err) =>
+      setPrivateEmailHash(docRef.id, email).catch((err) =>
         console.error('Failed to write private email:', err)
       )
     }
@@ -146,7 +146,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     })
 
     if (email) {
-      setPrivateEmail(id, email).catch((err) =>
+      setPrivateEmailHash(id, email).catch((err) =>
         console.error('Failed to update private email:', err)
       )
     }

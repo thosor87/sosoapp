@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { getPrivateEmail } from '@/lib/firebase/privateData'
 import { useRegistrationStore } from '@/features/registration/store'
 import { useToastStore } from '@/components/feedback/Toast'
 import { Button } from '@/components/ui/Button'
@@ -101,7 +100,6 @@ export function RegistrationManager() {
     const headers = [
       'Haushalt/Familie',
       'Ansprechpartner',
-      'E-Mail',
       'Erwachsene',
       'Kinder',
       'Gesamt',
@@ -124,16 +122,9 @@ export function RegistrationManager() {
         ? ts.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         : ''
 
-    // Fetch emails from private subcollections in parallel
-    const emailResults = await Promise.allSettled(
-      registrations.map((r) => getPrivateEmail(r.id))
-    )
-    const emails = emailResults.map((r) => (r.status === 'fulfilled' ? r.value : ''))
-
-    const rows = registrations.map((r, i) => [
+    const rows = registrations.map((r) => [
       r.familyName,
       r.contactName,
-      emails[i],
       r.adultsCount,
       r.childrenCount,
       r.adultsCount + r.childrenCount,

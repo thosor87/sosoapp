@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -13,7 +13,6 @@ import { validateStep1, validateStep2, validateStep3 } from '@/features/registra
 import { NumberStepper } from './NumberStepper'
 import type { Registration } from '@/lib/firebase/types'
 import { sendConfirmationEmail, sendUpdateEmail, sendDeletionEmail } from '@/lib/firebase/sendConfirmationEmail'
-import { getPrivateEmail } from '@/lib/firebase/privateData'
 
 interface RegistrationFormProps {
   editRegistration?: Registration
@@ -117,14 +116,6 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const isEditing = !!editRegistration
 
-  // Fetch email from private subcollection when editing
-  useEffect(() => {
-    if (!editRegistration?.id) return
-    getPrivateEmail(editRegistration.id)
-      .then((email) => setFormData((prev) => ({ ...prev, email })))
-      .catch(() => {})
-  }, [editRegistration?.id])
-
   // Food counts (excluding current edit)
   const foodCounts = useMemo(() => {
     const others = registrations.filter((r) => !editRegistration || r.id !== editRegistration.id)
@@ -217,7 +208,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
 
   const goNext = () => {
     let result = { valid: true, errors: {} as Record<string, string> }
-    if (step === 0) result = validateStep1(formData)
+    if (step === 0) result = validateStep1(formData, { isEditing })
     else if (step === 1) result = validateStep2(formData)
     else if (step === 2) result = validateStep3(formData)
 
@@ -432,8 +423,19 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
               <Input label="Haushalt/Familie" value={formData.familyName} onChange={(e) => updateField('familyName', e.target.value)} placeholder="z.B. Sorings im Norden" error={errors.familyName} />
               <Input label="Ansprechpartner" value={formData.contactName} onChange={(e) => updateField('contactName', e.target.value)} placeholder="Vorname" error={errors.contactName} />
               <div>
-                <Input label="E-Mail" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="fuer-bestaetigung@beispiel.de" error={errors.email} />
-                <p className="text-xs text-warm-400 mt-1">Du bekommst eine Bestätigung mit Bearbeitungslink</p>
+                <Input
+                  label={isEditing ? 'E-Mail (optional)' : 'E-Mail'}
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  placeholder="fuer-bestaetigung@beispiel.de"
+                  error={errors.email}
+                />
+                <p className="text-xs text-warm-400 mt-1">
+                  {isEditing
+                    ? 'Nur ausfüllen, wenn du eine Bestätigungsmail für diese Änderung möchtest'
+                    : 'Du bekommst eine Bestätigung mit Bearbeitungslink'}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <NumberStepper label="Erwachsene" value={formData.adultsCount} onChange={(v) => updateField('adultsCount', v)} min={1} max={20} error={errors.adultsCount} />
