@@ -24,7 +24,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               variant === 'ghost',
           },
           {
-            'h-9 px-3 text-sm gap-1.5': size === 'sm',
+            'h-10 px-4 text-sm gap-1.5': size === 'sm',
             'h-11 px-5 text-sm gap-2': size === 'md',
             'h-12 px-7 text-base gap-2.5': size === 'lg',
           },

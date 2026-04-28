@@ -364,7 +364,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
   }
 
   return (
-    <Card className="overflow-hidden flex flex-col max-h-[88vh]">
+    <Card className="overflow-hidden flex flex-col max-h-[85dvh]">
       {/* Step Indicator */}
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-2">
@@ -659,15 +659,19 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       )}
 
       {/* Navigation */}
-      <div className="px-6 py-4 flex items-center justify-between gap-3 border-t border-warm-100 bg-white">
-        {step > 0 ? <Button variant="ghost" onClick={goBack} type="button">Zurück</Button> : <div />}
-        {step < 3 ? (
-          <Button onClick={goNext} type="button">Weiter</Button>
-        ) : (
-          <Button onClick={handleSubmit} disabled={isSubmitting} size="lg" type="button">
-            {isSubmitting ? 'Wird gespeichert...' : isEditing ? 'Änderungen speichern' : 'Anmeldung absenden'}
-          </Button>
+      <div className="px-4 sm:px-6 py-4 flex items-center gap-3 border-t border-warm-100 bg-white">
+        {step > 0 && (
+          <Button variant="ghost" onClick={goBack} type="button" className="shrink-0">Zurück</Button>
         )}
+        <div className="flex-1">
+          {step < 3 ? (
+            <Button onClick={goNext} type="button" className="w-full">Weiter</Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={isSubmitting} size="lg" type="button" className="w-full">
+              {isSubmitting ? 'Wird gespeichert...' : isEditing ? 'Änderungen speichern' : 'Anmeldung absenden'}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Unregister Confirmation Modal */}

@@ -89,7 +89,7 @@ export function RegistrationList() {
         type="button"
         onClick={() => setConfirmingId(regId)}
         disabled={isSending || isSent}
-        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-warm-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer disabled:cursor-default disabled:opacity-60"
+        className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-warm-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer disabled:cursor-default disabled:opacity-60"
         title={isSent ? 'Link gesendet!' : 'Bearbeitungslink per E-Mail senden'}
       >
         {isSending ? (
