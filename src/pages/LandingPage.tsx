@@ -76,7 +76,13 @@ export function LandingPage() {
   return (
     <PageContainer>
       {/* Hero Section */}
-      <section className="text-center py-12 md:py-20">
+      <section
+        className="relative text-center py-12 md:py-20 -mx-4 md:-mx-6 px-4 md:px-6 rounded-3xl overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+      >
+        {/* Overlay to keep text readable over the photo */}
+        <div className="absolute inset-0 bg-gradient-to-b from-warm-50/70 via-warm-50/80 to-warm-50/95 pointer-events-none" />
+        <div className="relative">
         <motion.span
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -145,13 +151,11 @@ export function LandingPage() {
             <span>{linkCopied ? 'Kopiert!' : 'Einladungslink teilen'}</span>
           </button>
         </motion.div>
+        </div>
       </section>
 
       {/* Announcements */}
       <section className="mb-12">
-        <h2 className="text-2xl font-display font-bold text-warm-800 mb-6">
-          Neuigkeiten
-        </h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {eventConfig?.announcements
             ?.filter((a) => a.isVisible)
