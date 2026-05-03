@@ -266,8 +266,22 @@ export function LandingPage() {
             <h2 className="text-2xl font-display font-bold text-warm-800 mb-2">
               Geländeplan
             </h2>
-            <p className="text-warm-500 mb-6">
+            <p className="text-warm-500 mb-2">
               So findest du dich zurecht
+            </p>
+            <p className="text-sm text-warm-600 mb-6">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Dorfstra%C3%9Fe+69%2C+26906+Neudersum"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 hover:text-primary-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Dorfstraße 69, 26906 Neudersum
+              </a>
             </p>
             <MapDisplay mapData={mapData} />
           </motion.div>
