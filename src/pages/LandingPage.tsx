@@ -183,7 +183,7 @@ export function LandingPage() {
                   <h3
                     className={
                       isHero
-                        ? 'font-display text-2xl md:text-3xl font-bold text-warm-800 mb-3'
+                        ? 'font-sans text-2xl md:text-3xl font-extrabold tracking-tight text-warm-800 mb-3'
                         : 'font-semibold text-warm-800 mb-1'
                     }
                   >
