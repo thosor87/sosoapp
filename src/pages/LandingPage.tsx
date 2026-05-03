@@ -196,9 +196,7 @@ export function LandingPage() {
           <p className="text-warm-500 mb-6">
             Melde dich und deine Familie an!
           </p>
-          <div className="max-w-2xl">
-            <RegistrationForm />
-          </div>
+          <RegistrationForm />
         </motion.div>
       </section>
 

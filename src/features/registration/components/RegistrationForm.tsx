@@ -363,8 +363,18 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
     )
   }
 
+  // Modal mode (edit via ?edit= param) constrains height so the modal scrolls internally.
+  // Inline mode on the landing page should flow naturally with the page.
+  const inModal = isEditing
+  const cardClass = inModal
+    ? 'overflow-hidden flex flex-col max-h-[85dvh]'
+    : 'overflow-hidden'
+  const contentClass = inModal
+    ? 'px-6 pb-4 flex-1 overflow-y-auto min-h-0 relative'
+    : 'px-6 pb-4 relative'
+
   return (
-    <Card className="overflow-hidden flex flex-col max-h-[85dvh]">
+    <Card className={cardClass}>
       {/* Step Indicator */}
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between mb-2">
@@ -410,7 +420,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
       </div>
 
       {/* Step Content */}
-      <div className="px-6 pb-4 flex-1 overflow-y-auto min-h-0 relative">
+      <div className={contentClass}>
         <AnimatePresence mode="wait" custom={direction}>
           {step === 0 && (
             <motion.div key="step-0" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeInOut' }} className="space-y-5">
