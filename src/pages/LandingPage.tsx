@@ -95,7 +95,7 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="font-display text-4xl md:text-6xl font-bold text-warm-800 mb-4"
+          className="font-sans text-4xl md:text-6xl font-extrabold tracking-tight text-warm-800 mb-4"
         >
           {eventConfig?.title || 'Sorings Sommerfest'}
         </motion.h1>
