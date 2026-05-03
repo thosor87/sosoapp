@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
@@ -37,8 +37,47 @@ export function AnnouncementEditor() {
   const [editData, setEditData] = useState<Announcement | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const contentRef = useRef<HTMLTextAreaElement>(null)
 
   const announcements = eventConfig?.announcements ?? []
+
+  // Wrap or prepend markdown markers around the current selection in the content textarea.
+  const applyMarkdown = (mode: 'bold' | 'italic' | 'list') => {
+    const ta = contentRef.current
+    if (!ta || !editData) return
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    const value = editData.content
+    const selected = value.slice(start, end)
+    let next: string
+    let newCursor: number
+
+    if (mode === 'list') {
+      // Prepend "- " to each line in the selection (or current line if no selection)
+      const lineStart = value.lastIndexOf('\n', start - 1) + 1
+      const lineEnd = end > start ? end : value.indexOf('\n', start)
+      const sliceEnd = lineEnd === -1 ? value.length : lineEnd
+      const block = value.slice(lineStart, sliceEnd)
+      const transformed = block
+        .split('\n')
+        .map((line) => (line.startsWith('- ') ? line : `- ${line}`))
+        .join('\n')
+      next = value.slice(0, lineStart) + transformed + value.slice(sliceEnd)
+      newCursor = lineStart + transformed.length
+    } else {
+      const marker = mode === 'bold' ? '**' : '*'
+      const placeholder = mode === 'bold' ? 'fett' : 'kursiv'
+      const inner = selected || placeholder
+      next = value.slice(0, start) + marker + inner + marker + value.slice(end)
+      newCursor = start + marker.length + inner.length + marker.length
+    }
+
+    setEditData({ ...editData, content: next })
+    requestAnimationFrame(() => {
+      ta.focus()
+      ta.setSelectionRange(newCursor, newCursor)
+    })
+  }
 
   const saveAnnouncements = async (updated: Announcement[]) => {
     if (!eventId) return
@@ -158,14 +197,58 @@ export function AnnouncementEditor() {
                 }
                 placeholder="Ankündigungstitel..."
               />
-              <Textarea
-                label="Inhalt"
-                value={editData.content}
-                onChange={(e) =>
-                  setEditData({ ...editData, content: e.target.value })
-                }
-                placeholder="Beschreibung..."
-              />
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-warm-700">
+                  Inhalt
+                </label>
+                <div className="flex items-center gap-1 px-1">
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown('bold')}
+                    className="px-2.5 py-1 rounded-lg text-sm font-bold text-warm-600 hover:bg-warm-100 cursor-pointer transition-colors"
+                    title="Fett (Strg+B)"
+                  >
+                    B
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown('italic')}
+                    className="px-2.5 py-1 rounded-lg text-sm italic text-warm-600 hover:bg-warm-100 cursor-pointer transition-colors"
+                    title="Kursiv (Strg+I)"
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown('list')}
+                    className="px-2.5 py-1 rounded-lg text-sm text-warm-600 hover:bg-warm-100 cursor-pointer transition-colors"
+                    title="Aufzählung"
+                  >
+                    {'• Liste'}
+                  </button>
+                  <span className="ml-auto text-xs text-warm-400">
+                    Markdown: **fett**, *kursiv*, - Liste
+                  </span>
+                </div>
+                <Textarea
+                  ref={contentRef}
+                  value={editData.content}
+                  onChange={(e) =>
+                    setEditData({ ...editData, content: e.target.value })
+                  }
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+                      e.preventDefault()
+                      applyMarkdown('bold')
+                    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
+                      e.preventDefault()
+                      applyMarkdown('italic')
+                    }
+                  }}
+                  placeholder="Beschreibung..."
+                  className="min-h-[120px]"
+                />
+              </div>
 
               {/* Type Selector */}
               <div className="space-y-1.5">

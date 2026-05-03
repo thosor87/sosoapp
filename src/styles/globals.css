@@ -61,6 +61,24 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Markdown rendering for announcement bodies */
+.prose-announcement p + p {
+  margin-top: 0.6em;
+}
+.prose-announcement strong {
+  font-weight: 700;
+  color: var(--color-warm-800);
+}
+.prose-announcement ul,
+.prose-announcement ol {
+  margin: 0.4em 0;
+  padding-left: 1.25em;
+  list-style: revert;
+}
+.prose-announcement li + li {
+  margin-top: 0.2em;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

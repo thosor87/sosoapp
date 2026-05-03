@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 // useSearchParams not needed - edit param read via window.location.search
 import { motion } from 'motion/react'
+import ReactMarkdown from 'react-markdown'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Modal } from '@/components/ui/Modal'
 import { useAuthStore } from '@/features/auth/store'
@@ -108,6 +109,14 @@ export function LandingPage() {
                 })
               : 'Datum folgt'}
           </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mt-1 text-sm md:text-base text-white/80 [text-shadow:_0_1px_8px_rgba(0,0,0,0.4)]"
+          >
+            Dorfstraße 69, 26906 Neudersum
+          </motion.p>
         </div>
       </section>
 
@@ -167,15 +176,31 @@ export function LandingPage() {
                   >
                     {announcement.title}
                   </h3>
-                  <p
+                  <div
                     className={
                       isHero
-                        ? 'text-base md:text-lg text-warm-600 whitespace-pre-line leading-relaxed'
-                        : 'text-sm text-warm-500'
+                        ? 'prose-announcement text-base md:text-lg text-warm-600 leading-relaxed'
+                        : 'prose-announcement text-sm text-warm-500'
                     }
                   >
-                    {announcement.content}
-                  </p>
+                    <ReactMarkdown
+                      allowedElements={['p', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'br', 'code']}
+                      components={{
+                        a: ({ href, children }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary-600 underline hover:text-primary-700"
+                          >
+                            {children}
+                          </a>
+                        ),
+                      }}
+                    >
+                      {announcement.content}
+                    </ReactMarkdown>
+                  </div>
                 </motion.div>
               )
             }) || (
