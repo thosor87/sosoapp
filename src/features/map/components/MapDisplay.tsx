@@ -7,8 +7,6 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { cn } from '@/lib/utils/cn'
-import { Button } from '@/components/ui/Button'
-import { useToastStore } from '@/components/feedback/Toast'
 import type { MapDocument, GeoJSONFeature } from '@/lib/firebase/types'
 
 // Fix Leaflet default marker icons
@@ -218,12 +216,6 @@ export function MapDisplay({ mapData }: MapDisplayProps) {
     })
   }
 
-  const handleDownload = () => {
-    useToastStore
-      .getState()
-      .addToast('Download-Funktion kommt in einem zukünftigen Update', 'info')
-  }
-
   return (
     <div className="space-y-4">
       <div className="relative rounded-xl overflow-hidden border border-warm-200">
@@ -260,11 +252,6 @@ export function MapDisplay({ mapData }: MapDisplayProps) {
         </MapContainer>
       </div>
 
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={handleDownload}>
-          Als Bild herunterladen
-        </Button>
-      </div>
     </div>
   )
 }
