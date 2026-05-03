@@ -77,44 +77,28 @@ export function LandingPage() {
     <PageContainer>
       {/* Hero Section — full bleed, flush against the header */}
       <section
-        className="relative text-center py-16 md:py-28 px-4 md:px-6 overflow-hidden bg-cover bg-center w-screen left-1/2 -translate-x-1/2 -mt-6 md:-mt-10"
+        className="relative text-center py-32 md:py-52 px-4 md:px-6 overflow-hidden bg-cover bg-center w-screen left-1/2 -translate-x-1/2 -mt-6 md:-mt-10"
         style={{ backgroundImage: "url('/hero-bg.webp')" }}
       >
+        {/* Subtle dark vignette so white text stays readable */}
+        <div className="absolute inset-0 bg-black/25 pointer-events-none" />
         {/* Soft fade at the bottom for transition into content */}
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-warm-50 pointer-events-none" />
-        <div className="relative inline-block max-w-2xl px-6 md:px-12 py-8 md:py-10 rounded-3xl bg-warm-50/75 backdrop-blur-md shadow-xl ring-1 ring-white/40">
-        <motion.span
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', duration: 0.8 }}
-          className="text-7xl md:text-8xl block mb-6"
-        >
-          {'\u2600\uFE0F'}
-        </motion.span>
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="font-sans text-4xl md:text-6xl font-extrabold tracking-tight text-warm-800 mb-4"
-        >
-          {eventConfig?.title || 'Sorings Sommerfest'}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-lg md:text-xl text-warm-500 max-w-lg mx-auto"
-        >
-          {eventConfig?.location || 'Ort wird noch bekannt gegeben'}
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full text-sm font-medium"
-        >
-          <span>{'\uD83D\uDCC5'}</span>
-          <span>
+        <div className="relative">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="font-sans text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white uppercase [text-shadow:_0_2px_12px_rgba(0,0,0,0.4)]"
+          >
+            {eventConfig?.title || 'Sorings Sommerfest'}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mt-4 text-base md:text-lg font-medium text-white/90 [text-shadow:_0_1px_8px_rgba(0,0,0,0.4)]"
+          >
             {eventConfig?.date
               ? eventConfig.date.toDate().toLocaleDateString('de-DE', {
                   weekday: 'long',
@@ -123,36 +107,30 @@ export function LandingPage() {
                   year: 'numeric',
                 })
               : 'Datum folgt'}
-          </span>
-        </motion.div>
-
-        {/* Copy invite link button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-4"
-        >
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex items-center gap-1.5 text-xs text-warm-400 hover:text-primary-600 transition-colors cursor-pointer"
-            title="Einladungslink kopieren"
-          >
-            {linkCopied ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            )}
-            <span>{linkCopied ? 'Kopiert!' : 'Einladungslink teilen'}</span>
-          </button>
-        </motion.div>
+          </motion.p>
         </div>
       </section>
+
+      {/* Share invite link \u2014 minimal, below hero */}
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="inline-flex items-center gap-1.5 text-xs text-warm-400 hover:text-primary-600 transition-colors cursor-pointer"
+          title="Einladungslink kopieren"
+        >
+          {linkCopied ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          )}
+          <span>{linkCopied ? 'Kopiert!' : 'Einladungslink teilen'}</span>
+        </button>
+      </div>
 
       {/* Announcements */}
       <section className="mt-12 md:mt-16 mb-12">
