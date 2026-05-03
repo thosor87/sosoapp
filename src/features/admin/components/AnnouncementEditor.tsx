@@ -199,6 +199,14 @@ export function AnnouncementEditor() {
               </div>
 
               <Toggle
+                checked={editData.size === 'hero'}
+                onChange={(checked) =>
+                  setEditData({ ...editData, size: checked ? 'hero' : 'normal' })
+                }
+                label="Als großes Element (Einleitungstext, volle Breite)"
+              />
+
+              <Toggle
                 checked={editData.isVisible}
                 onChange={(checked) =>
                   setEditData({ ...editData, isVisible: checked })

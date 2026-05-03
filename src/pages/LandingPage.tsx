@@ -156,26 +156,47 @@ export function LandingPage() {
           {eventConfig?.announcements
             ?.filter((a) => a.isVisible)
             .sort((a, b) => a.order - b.order)
-            .map((announcement, index) => (
-              <motion.div
-                key={announcement.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-                className={`rounded-2xl p-5 border ${
-                  announcement.type === 'highlight'
-                    ? 'bg-primary-50 border-primary-200'
-                    : announcement.type === 'warning'
-                      ? 'bg-amber-50 border-amber-200'
-                      : 'bg-white border-warm-100'
-                }`}
-              >
-                <h3 className="font-semibold text-warm-800 mb-1">
-                  {announcement.title}
-                </h3>
-                <p className="text-sm text-warm-500">{announcement.content}</p>
-              </motion.div>
-            )) || (
+            .map((announcement, index) => {
+              const isHero = announcement.size === 'hero'
+              const colorClass =
+                announcement.type === 'highlight'
+                  ? 'bg-primary-50 border-primary-200'
+                  : announcement.type === 'warning'
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-white border-warm-100'
+              return (
+                <motion.div
+                  key={announcement.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index }}
+                  className={`rounded-2xl border ${colorClass} ${
+                    isHero
+                      ? 'col-span-full p-6 md:p-8'
+                      : 'p-5'
+                  }`}
+                >
+                  <h3
+                    className={
+                      isHero
+                        ? 'font-display text-xl md:text-2xl font-bold text-warm-800 mb-2'
+                        : 'font-semibold text-warm-800 mb-1'
+                    }
+                  >
+                    {announcement.title}
+                  </h3>
+                  <p
+                    className={
+                      isHero
+                        ? 'text-base md:text-lg text-warm-600 whitespace-pre-line leading-relaxed'
+                        : 'text-sm text-warm-500'
+                    }
+                  >
+                    {announcement.content}
+                  </p>
+                </motion.div>
+              )
+            }) || (
             <p className="text-warm-400 col-span-full text-center py-8">
               Noch keine Neuigkeiten vorhanden.
             </p>

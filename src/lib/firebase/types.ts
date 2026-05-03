@@ -29,6 +29,7 @@ export interface Announcement {
   type: 'info' | 'warning' | 'highlight'
   order: number
   isVisible: boolean
+  size?: 'normal' | 'hero'
 }
 
 export interface Registration {
