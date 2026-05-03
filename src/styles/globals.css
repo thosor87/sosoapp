@@ -3,7 +3,7 @@
 @theme {
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Playfair Display', Georgia, serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
   /* Primary: Warm sunset orange-coral */
   --color-primary-50: #FFF7ED;
