@@ -75,10 +75,10 @@ export function LandingPage() {
 
   return (
     <PageContainer>
-      {/* Hero Section */}
+      {/* Hero Section — full bleed across viewport width */}
       <section
-        className="relative text-center py-12 md:py-20 -mx-4 md:-mx-6 px-4 md:px-6 rounded-3xl overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+        className="relative text-center py-12 md:py-20 px-4 md:px-6 overflow-hidden bg-cover bg-center w-screen left-1/2 -translate-x-1/2"
+        style={{ backgroundImage: "url('/hero-bg.webp')" }}
       >
         {/* Overlay to keep text readable over the photo */}
         <div className="absolute inset-0 bg-gradient-to-b from-warm-50/70 via-warm-50/80 to-warm-50/95 pointer-events-none" />
@@ -155,7 +155,7 @@ export function LandingPage() {
       </section>
 
       {/* Announcements */}
-      <section className="mb-12">
+      <section className="mt-12 md:mt-16 mb-12">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {eventConfig?.announcements
             ?.filter((a) => a.isVisible)
