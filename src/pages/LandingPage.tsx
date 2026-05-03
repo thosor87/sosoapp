@@ -174,16 +174,16 @@ export function LandingPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * index }}
-                  className={`rounded-2xl border ${colorClass} ${
+                  className={
                     isHero
-                      ? 'col-span-full p-6 md:p-8'
-                      : 'p-5'
-                  }`}
+                      ? 'col-span-full px-1 py-2 md:py-4'
+                      : `rounded-2xl border ${colorClass} p-5`
+                  }
                 >
                   <h3
                     className={
                       isHero
-                        ? 'font-display text-xl md:text-2xl font-bold text-warm-800 mb-2'
+                        ? 'font-display text-2xl md:text-3xl font-bold text-warm-800 mb-3'
                         : 'font-semibold text-warm-800 mb-1'
                     }
                   >
