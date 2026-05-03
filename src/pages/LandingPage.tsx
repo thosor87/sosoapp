@@ -75,14 +75,14 @@ export function LandingPage() {
 
   return (
     <PageContainer>
-      {/* Hero Section — full bleed across viewport width */}
+      {/* Hero Section — full bleed, flush against the header */}
       <section
-        className="relative text-center py-12 md:py-20 px-4 md:px-6 overflow-hidden bg-cover bg-center w-screen left-1/2 -translate-x-1/2"
+        className="relative text-center py-16 md:py-28 px-4 md:px-6 overflow-hidden bg-cover bg-center w-screen left-1/2 -translate-x-1/2 -mt-6 md:-mt-10"
         style={{ backgroundImage: "url('/hero-bg.webp')" }}
       >
-        {/* Overlay to keep text readable over the photo */}
-        <div className="absolute inset-0 bg-gradient-to-b from-warm-50/70 via-warm-50/80 to-warm-50/95 pointer-events-none" />
-        <div className="relative">
+        {/* Soft fade at the bottom for transition into content */}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-warm-50 pointer-events-none" />
+        <div className="relative inline-block max-w-2xl px-6 md:px-12 py-8 md:py-10 rounded-3xl bg-warm-50/75 backdrop-blur-md shadow-xl ring-1 ring-white/40">
         <motion.span
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
