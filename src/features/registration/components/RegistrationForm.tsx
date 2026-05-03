@@ -543,7 +543,7 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                   <AnimatePresence>
                     {formData.food.bringsOther && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden space-y-2">
-                        <Textarea label="Was bringst du mit?" value={formData.food.otherDescription} onChange={(e) => updateFood('otherDescription', e.target.value)} placeholder="z.B. Brot, Dips, Getränke..." error={errors.otherDescription} />
+                        <Textarea label="Was bringst du mit?" value={formData.food.otherDescription} onChange={(e) => updateFood('otherDescription', e.target.value)} placeholder="z.B. Brot, Dips..." error={errors.otherDescription} />
                       </motion.div>
                     )}
                   </AnimatePresence>
