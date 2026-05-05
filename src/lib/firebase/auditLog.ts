@@ -141,3 +141,16 @@ export function buildUpdateSummary(before: RegistrationSnapshot, after: Partial<
 
   return changes.length > 0 ? changes.join(' · ') : 'Keine Änderungen'
 }
+
+export function buildReplySummary(
+  field: 'campingNotesReply' | 'commentsReply',
+  action: 'set' | 'delete',
+  text?: string
+): string {
+  const fieldLabel = field === 'campingNotesReply' ? 'Zelten-Antwort' : 'Anmerkung-Antwort'
+  if (action === 'delete') return `${fieldLabel} entfernt`
+  const t = (text ?? '').trim()
+  const preview = t.slice(0, 60)
+  const ellipsis = t.length > 60 ? '…' : ''
+  return `${fieldLabel}: „${preview}${ellipsis}"`
+}

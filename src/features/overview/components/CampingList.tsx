@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { Card } from '@/components/ui/Card'
 import { useRegistrationStore } from '@/features/registration/store'
+import { ReplyBlock } from './ReplyBlock'
 
 export function CampingList() {
   const registrations = useRegistrationStore((s) => s.registrations)
@@ -58,6 +59,7 @@ export function CampingList() {
                           {reg.camping.notes}
                         </p>
                       )}
+                      {reg.campingNotesReply && <ReplyBlock reply={reg.campingNotesReply} />}
                     </div>
                   </motion.div>
                 )

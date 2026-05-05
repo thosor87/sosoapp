@@ -7,6 +7,7 @@ import { StatCards } from '@/features/overview/components/StatCards'
 import { RegistrationList } from '@/features/overview/components/RegistrationList'
 import { FoodOverview } from '@/features/overview/components/FoodOverview'
 import { CampingList } from '@/features/overview/components/CampingList'
+import { CommentsList } from '@/features/overview/components/CommentsList'
 
 export function OverviewPage() {
   const eventId = useAuthStore((s) => s.eventId)
@@ -49,6 +50,7 @@ export function OverviewPage() {
       <section className="mb-8 space-y-4">
         <FoodOverview />
         <CampingList />
+        <CommentsList />
       </section>
     </PageContainer>
   )

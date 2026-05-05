@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { RegistrationForm } from '@/features/registration/components/RegistrationForm'
+import { CommentReplyEditor } from './CommentReplyEditor'
 import type { Registration } from '@/lib/firebase/types'
 
 const LAST_VISIT_KEY = 'soso-admin-last-registrations-visit'
@@ -271,6 +272,40 @@ export function RegistrationManager() {
           </tbody>
         </table>
       </div>
+
+      {/* Kommentare & Antworten */}
+      {registrations.some((r) => r.camping.notes?.trim() || r.comments?.trim()) && (
+        <div className="rounded-xl border border-warm-100 bg-white p-4">
+          <h3 className="text-sm font-semibold text-warm-700 mb-3">Kommentare & Antworten</h3>
+          <div className="space-y-4">
+            {registrations
+              .filter((r) => r.camping.notes?.trim() || r.comments?.trim())
+              .map((reg) => (
+                <div key={reg.id} className="border-b border-warm-50 pb-4 last:border-b-0 last:pb-0">
+                  <div className="text-sm font-medium text-warm-800">{reg.familyName}</div>
+                  {reg.camping.notes?.trim() && (
+                    <CommentReplyEditor
+                      registrationId={reg.id}
+                      field="campingNotesReply"
+                      comment={reg.camping.notes}
+                      reply={reg.campingNotesReply}
+                      label="Anmerkung Zelten"
+                    />
+                  )}
+                  {reg.comments?.trim() && (
+                    <CommentReplyEditor
+                      registrationId={reg.id}
+                      field="commentsReply"
+                      comment={reg.comments}
+                      reply={reg.commentsReply}
+                      label="Allgemeine Anmerkung"
+                    />
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="rounded-xl border border-warm-100 bg-warm-50 p-4">

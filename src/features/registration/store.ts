@@ -9,11 +9,12 @@ import {
   doc,
   serverTimestamp,
   deleteField,
+  Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { useToastStore } from '@/components/feedback/Toast'
 import type { Registration } from '@/lib/firebase/types'
-import { writeAuditLog, buildRegistrationSummary, buildUpdateSummary } from '@/lib/firebase/auditLog'
+import { writeAuditLog, buildRegistrationSummary, buildUpdateSummary, buildReplySummary } from '@/lib/firebase/auditLog'
 import { setPrivateEmailHash } from '@/lib/firebase/privateData'
 import { useAuthStore } from '@/features/auth/store'
 
@@ -49,6 +50,15 @@ interface RegistrationState {
   restoreRegistration: (
     id: string,
     performedBy?: 'user' | 'admin'
+  ) => Promise<void>
+  setReply: (
+    id: string,
+    field: 'campingNotesReply' | 'commentsReply',
+    text: string
+  ) => Promise<void>
+  deleteReply: (
+    id: string,
+    field: 'campingNotesReply' | 'commentsReply'
   ) => Promise<void>
   getRegistration: (id: string) => Registration | undefined
 }
@@ -126,6 +136,11 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
   },
 
   updateRegistration: async (id, data, email, performedBy = 'user') => {
+    // Replies are admin-only and never mutated through the standard update path.
+    // Strip them defensively in case a caller passes them in.
+    if ('campingNotesReply' in data) delete (data as Partial<Registration>).campingNotesReply
+    if ('commentsReply' in data) delete (data as Partial<Registration>).commentsReply
+
     const existing = get().registrations.find((r) => r.id === id)
     const current = get().registrations
 
@@ -212,6 +227,60 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     } catch (error) {
       console.error('Error restoring registration:', error)
       useToastStore.getState().addToast('Fehler beim Wiederherstellen', 'error')
+    }
+  },
+
+  setReply: async (id, field, text) => {
+    const trimmed = text.trim()
+    if (!trimmed) {
+      useToastStore.getState().addToast('Antwort darf nicht leer sein', 'error')
+      return
+    }
+    const existing = get().registrations.find((r) => r.id === id)
+    if (!existing) {
+      useToastStore.getState().addToast('Anmeldung nicht gefunden', 'error')
+      return
+    }
+    try {
+      await updateDoc(doc(db, 'registrations', id), {
+        [field]: { text: trimmed, repliedAt: Timestamp.now() },
+        updatedAt: serverTimestamp(),
+      })
+      writeAuditLog({
+        eventId: existing.eventId,
+        action: 'update',
+        entityId: id,
+        familyName: existing.familyName,
+        summary: buildReplySummary(field, 'set', trimmed),
+        performedBy: 'admin',
+      })
+      useToastStore.getState().addToast('Antwort gespeichert', 'success')
+    } catch (error) {
+      console.error('Error saving reply:', error)
+      useToastStore.getState().addToast('Fehler beim Speichern der Antwort', 'error')
+    }
+  },
+
+  deleteReply: async (id, field) => {
+    const existing = get().registrations.find((r) => r.id === id)
+    if (!existing) return
+    try {
+      await updateDoc(doc(db, 'registrations', id), {
+        [field]: deleteField(),
+        updatedAt: serverTimestamp(),
+      })
+      writeAuditLog({
+        eventId: existing.eventId,
+        action: 'update',
+        entityId: id,
+        familyName: existing.familyName,
+        summary: buildReplySummary(field, 'delete'),
+        performedBy: 'admin',
+      })
+      useToastStore.getState().addToast('Antwort gelöscht', 'success')
+    } catch (error) {
+      console.error('Error deleting reply:', error)
+      useToastStore.getState().addToast('Fehler beim Löschen der Antwort', 'error')
     }
   },
 

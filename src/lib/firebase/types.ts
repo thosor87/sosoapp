@@ -32,6 +32,12 @@ export interface Announcement {
   size?: 'normal' | 'hero'
 }
 
+export interface AdminReply {
+  text: string
+  repliedAt: Timestamp
+  repliedBy?: string
+}
+
 export interface Registration {
   id: string
   eventId: string
@@ -42,6 +48,8 @@ export interface Registration {
   food: FoodContribution
   camping: CampingInfo
   comments: string
+  campingNotesReply?: AdminReply
+  commentsReply?: AdminReply
   isDeleted?: boolean
   deletedAt?: Timestamp
   createdAt: Timestamp

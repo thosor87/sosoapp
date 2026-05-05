@@ -26,6 +26,21 @@ interface RegistrationSummary {
     notes: string
   }
   comments: string
+  campingNotesReply?: { text: string }
+  commentsReply?: { text: string }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function renderReplyBlock(label: string, comment: string, replyText: string): string {
+  return `
+  <div style="margin: 16px 0; padding: 12px 16px; background: #FFF7ED; border-left: 4px solid #F97316; border-radius: 6px;">
+    <div style="font-size: 12px; font-weight: 600; color: #C2410C; text-transform: uppercase;">${escapeHtml(label)}</div>
+    <div style="margin-top: 6px; color: #57534E; white-space: pre-wrap;">&bdquo;${escapeHtml(comment)}&ldquo;</div>
+    <div style="margin-top: 8px; font-weight: 600; color: #1C1917; white-space: pre-wrap;">&rarr; ${escapeHtml(replyText)}</div>
+  </div>`
 }
 
 function buildSummaryHtml(reg: RegistrationSummary): string {
@@ -148,11 +163,21 @@ export async function sendEditLinkEmail(
 
   const editLink = `${window.location.origin}/?token=${accessToken}&edit=${registration.id}`
 
+  const repliesHtml = [
+    registration.campingNotesReply && registration.camping?.notes
+      ? renderReplyBlock('Antwort zu Anmerkung Zelten', registration.camping.notes, registration.campingNotesReply.text)
+      : '',
+    registration.commentsReply && registration.comments
+      ? renderReplyBlock('Antwort zu Anmerkung', registration.comments, registration.commentsReply.text)
+      : '',
+  ].join('')
+
   const html = wrapHtml(`
   <p style="color: #a8a29e; margin-top: 0;">Dein Bearbeitungslink</p>
   <p>Hallo ${registration.contactName},</p>
   <p>du hast einen Bearbeitungslink f&uuml;r deine Anmeldung angefragt. Hier ist dein aktueller Stand:</p>
   ${buildSummaryHtml(registration)}
+  ${repliesHtml}
   <p>Hier kannst du &auml;ndern oder zur&uuml;ckziehen:</p>
   <p style="text-align: center; margin: 24px 0;">
     <a href="${editLink}" style="display: inline-block; background: #F97316; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Anmeldung bearbeiten</a>
