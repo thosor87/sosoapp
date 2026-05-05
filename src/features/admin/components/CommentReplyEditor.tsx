@@ -59,7 +59,7 @@ export function CommentReplyEditor({
 
       {!isEditing && reply && (
         <div className="mt-3 rounded bg-white p-2">
-          <div className="text-xs font-semibold text-orange-700">Antwort von Familie Soring</div>
+          <div className="text-xs font-semibold text-orange-700">Antwort vom Orga-Team</div>
           <div className="mt-1 whitespace-pre-wrap text-stone-800">{reply.text}</div>
           <div className="mt-2 flex gap-2">
             <Button size="sm" variant="outline" onClick={startEdit} disabled={saving}>
