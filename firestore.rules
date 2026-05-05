@@ -40,7 +40,17 @@ service cloud.firestore {
                     && request.resource.data.adultsCount <= 50
                     && request.resource.data.childrenCount is number
                     && request.resource.data.childrenCount >= 0
-                    && request.resource.data.childrenCount <= 50;
+                    && request.resource.data.childrenCount <= 50
+                    && (!('campingNotesReply' in request.resource.data)
+                        || (request.resource.data.campingNotesReply.text is string
+                            && request.resource.data.campingNotesReply.text.size() > 0
+                            && request.resource.data.campingNotesReply.text.size() <= 1000
+                            && request.resource.data.campingNotesReply.repliedAt is timestamp))
+                    && (!('commentsReply' in request.resource.data)
+                        || (request.resource.data.commentsReply.text is string
+                            && request.resource.data.commentsReply.text.size() > 0
+                            && request.resource.data.commentsReply.text.size() <= 1000
+                            && request.resource.data.commentsReply.repliedAt is timestamp));
       allow delete: if false;
 
       // E-Mail in privater Subcollection – nur per bekannter Dokument-ID zugänglich
