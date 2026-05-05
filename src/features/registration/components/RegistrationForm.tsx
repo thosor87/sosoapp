@@ -11,6 +11,7 @@ import { useRegistrationStore, FOOD_LIMIT_DEFAULT } from '@/features/registratio
 import { useToastStore } from '@/components/feedback/Toast'
 import { validateStep1, validateStep2, validateStep3 } from '@/features/registration/validation'
 import { NumberStepper } from './NumberStepper'
+import { ReplyBlock } from '@/features/overview/components/ReplyBlock'
 import type { Registration } from '@/lib/firebase/types'
 import { sendConfirmationEmail, sendUpdateEmail, sendDeletionEmail } from '@/lib/firebase/sendConfirmationEmail'
 
@@ -582,11 +583,17 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                         <NumberStepper label="Personen" value={formData.camping.personCount} onChange={(v) => updateCamping('personCount', v)} min={1} max={50} />
                       </div>
                       <Textarea label="Anmerkungen zum Zelten" value={formData.camping.notes} onChange={(e) => updateCamping('notes', e.target.value)} placeholder="z.B. Besondere Wünsche zum Zelten" />
+                      {editRegistration?.campingNotesReply && (
+                        <ReplyBlock reply={editRegistration.campingNotesReply} />
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
               <Textarea label="Sonstige Anmerkungen" value={formData.comments} onChange={(e) => updateField('comments', e.target.value)} placeholder="Allergien, besondere Wünsche..." />
+              {editRegistration?.commentsReply && (
+                <ReplyBlock reply={editRegistration.commentsReply} />
+              )}
               <p className="text-xs text-warm-500 -mt-3">
                 Hinweis: Anmerkungen werden in der Gäste-Übersicht öffentlich angezeigt. Bitte keine sensiblen Informationen schreiben.
               </p>
