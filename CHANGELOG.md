@@ -2,6 +2,17 @@
 
 Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
+## [Unreleased]
+
+### Admin-Antworten auf Gast-Kommentare
+
+- Admin kann auf `Anmerkungen Zelten` und `Sonstige Anmerkungen` antworten (Editor in der neuen Sektion „Kommentare & Antworten" im Admin-Bereich)
+- Antworten werden in der öffentlichen Übersicht angezeigt: unter den Zelter-Notizen sowie in der neuen Sektion „Anmerkungen"
+- Antworten werden in Edit-Link-Mails mitgeschickt, wenn der Gast einen neuen Link anfordert
+- Hinweis im Anmeldeformular: `Sonstige Anmerkungen` werden öffentlich angezeigt
+- Audit-Log-Einträge für Anlegen, Ändern und Löschen von Antworten
+- Firestore-Rules: strukturelle Validierung der Reply-Felder
+
 ## [1.5.0] – 2026-03-03
 
 ### Bearbeitungslink auf Anfrage
