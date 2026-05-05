@@ -587,6 +587,9 @@ export function RegistrationForm({ editRegistration, onClose }: RegistrationForm
                 </AnimatePresence>
               </div>
               <Textarea label="Sonstige Anmerkungen" value={formData.comments} onChange={(e) => updateField('comments', e.target.value)} placeholder="Allergien, besondere Wünsche..." />
+              <p className="text-xs text-warm-500 -mt-3">
+                Hinweis: Anmerkungen werden in der Gäste-Übersicht öffentlich angezeigt. Bitte keine sensiblen Informationen schreiben.
+              </p>
             </motion.div>
           )}
 
