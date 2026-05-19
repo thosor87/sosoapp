@@ -23,9 +23,19 @@ function escapeCsv(value) {
 }
 
 async function exportRegistrations() {
+  console.log('Lese aktives Event aus Firestore...')
+
+  const eventsSnap = await db.collection('events').where('isRegistrationOpen', '==', true).limit(1).get()
+  if (eventsSnap.empty) {
+    console.log('Kein aktives Event gefunden.')
+    process.exit(0)
+  }
+  const eventId = eventsSnap.docs[0].id
+  console.log(`Aktives Event: ${eventId}`)
+
   console.log('Lese Anmeldungen aus Firestore...')
 
-  const snapshot = await db.collection('registrations').get()
+  const snapshot = await db.collection('registrations').where('eventId', '==', eventId).get()
 
   if (snapshot.empty) {
     console.log('Keine Anmeldungen vorhanden.')
