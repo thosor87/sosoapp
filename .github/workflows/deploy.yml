@@ -9,6 +9,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write # action-hosting-deploy legt den "Deploy Preview"-Check-Run an
+      pull-requests: write # ... und postet die Preview-URL als PR-Kommentar
     env:
       # Exposed so deploy steps can be skipped when the secret is unavailable
       # (e.g. Dependabot PRs, which never receive repository secrets).
