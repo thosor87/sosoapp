@@ -9,6 +9,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      # Exposed so deploy steps can be skipped when the secret is unavailable
+      # (e.g. Dependabot PRs, which never receive repository secrets).
+      FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -83,8 +87,10 @@ jobs:
           channelId: live
 
       # Preview-Deployment (für Pull Requests / Feature-Branches)
+      # Übersprungen, wenn kein Service-Account-Secret vorhanden ist
+      # (z. B. Dependabot-PRs) – der Build bleibt das Merge-Gate.
       - name: Deploy to preview channel
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && env.FIREBASE_SA != ''
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
