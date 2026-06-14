@@ -13,10 +13,21 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          firebase: ['firebase/app', 'firebase/firestore'],
-          leaflet: ['leaflet', 'react-leaflet'],
-          vendor: ['react', 'react-dom', 'react-router', 'zustand', 'motion'],
+        // Function form: the object form of manualChunks is deprecated and
+        // is dropped from newer Rollup type definitions.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('/firebase/')) return 'firebase'
+          if (id.includes('/leaflet/') || id.includes('/react-leaflet/')) return 'leaflet'
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-router/') ||
+            id.includes('/react-router-dom/') ||
+            id.includes('/zustand/') ||
+            id.includes('/motion/')
+          )
+            return 'vendor'
         },
       },
     },
