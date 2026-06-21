@@ -18,7 +18,7 @@ jobs:
       # (e.g. Dependabot PRs, which never receive repository secrets).
       FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 22
