@@ -13,7 +13,7 @@
     "@emailjs/browser": "^4.4.1",
     "@geoman-io/leaflet-geoman-free": "^2.20.0",
     "clsx": "^2.1.1",
-    "firebase": "^12.15.0",
+    "firebase": "^12.16.0",
     "leaflet": "^1.9.4",
     "leaflet-rotate": "^0.2.8",
     "motion": "^12.42.2",
