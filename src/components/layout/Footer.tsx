@@ -12,14 +12,14 @@ export function Footer() {
           <span className="text-red-400">{'\u2764\uFE0F'}</span>
           {' '}and AI by{' '}
           <a
-            href="https://www.lilapixel.de"
+            href="https://digital.lilapixel.de"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center align-middle hover:opacity-80 transition-opacity"
           >
             <img
               src="https://drat580elycl3.cloudfront.net/images/LP_Logo.png"
-              alt="LILAPIXEL Grafikdesign"
+              alt="LILAPIXEL Digital"
               className="h-8 w-auto ml-1.5 hover:-translate-y-0.5 transition-transform"
             />
           </a>
@@ -31,7 +31,7 @@ export function Footer() {
 
         <p className="text-xs">
           <a
-            href="https://www.lilapixel.de/impressum.html"
+            href="https://digital.lilapixel.de/impressum"
             target="_blank"
             rel="noopener noreferrer"
             className="text-warm-400 hover:text-warm-200 transition-colors underline underline-offset-2"
