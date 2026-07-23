@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 export function QuizLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const previous = document.title
-    document.title = 'JaWort – Hochzeitsquiz'
+    document.title = 'Ja?Wort – Hochzeitsquiz'
     return () => {
       document.title = previous
     }

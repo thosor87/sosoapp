@@ -6,7 +6,7 @@ export const QUIZ_DOC_ID = 'wedding'
 /** Standard-Admin-Passwort (kann in der Admin-Oberfläche geändert werden). */
 export const DEFAULT_ADMIN_PASSWORD = 'trauung'
 
-export const DEFAULT_TITLE = 'JaWort – Das Hochzeitsquiz'
+export const DEFAULT_TITLE = 'Ja?Wort – Das Hochzeitsquiz'
 
 export const DEFAULT_INTRO =
   'Willkommen zur Hochzeit von Birgit & Thomas! 🎉\n\n' +

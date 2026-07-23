@@ -98,7 +98,7 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // ── Hochzeitsquiz „JaWort" ──────────────────────────────
+    // ── Hochzeitsquiz „Ja?Wort" ─────────────────────────────
     // Lesen: alle (Gäste rufen das Quiz per QR-Code auf)
     // Erstellen/Ändern: mit Struktur-Validierung, kein Löschen
     // (Admin-Zugang wird client-seitig per Passwort-Hash geprüft,

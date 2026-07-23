@@ -17,7 +17,7 @@ const AdminPage = lazy(() =>
   import('@/pages/AdminPage').then((m) => ({ default: m.AdminPage }))
 )
 
-// Hochzeitsquiz „JaWort" – eigenständig, ohne Magic-Link-Zugang der Party-App
+// Hochzeitsquiz „Ja?Wort" – eigenständig, ohne Magic-Link-Zugang der Party-App
 const QuizPage = lazy(() =>
   import('@/pages/QuizPage').then((m) => ({ default: m.QuizPage }))
 )

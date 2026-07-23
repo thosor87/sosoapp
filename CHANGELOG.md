@@ -4,9 +4,9 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
 
-### JaWort – Hochzeitsquiz 💍
+### Ja?Wort – Hochzeitsquiz 💍
 
-- Neues, eigenständiges Hochzeitsquiz „JaWort" unter der Route `/quiz` – von der Sommerfest-App unabhängig und ohne Magic-Link-Zugang, damit Gäste es direkt per QR-Code aufrufen können
+- Neues, eigenständiges Hochzeitsquiz „Ja?Wort" unter der Route `/quiz` – von der Sommerfest-App unabhängig und ohne Magic-Link-Zugang, damit Gäste es direkt per QR-Code aufrufen können
 - Sechs (frei konfigurierbare) Fragen mit je vier Antwortmöglichkeiten; nach korrekter Beantwortung erscheint ein konfigurierbares Lösungswort
 - Fehlerverzeihender Spielablauf: beliebig oft raten, bis die richtige Antwort gewählt wurde (ideal für Hochzeitsgäste)
 - Admin-Oberfläche unter `/quiz/admin` mit einfachem Passwortschutz (SHA-256, analog zur Party-App): Titel, Einleitung, Lösungswort, Fragen und Antworten sowie das Passwort selbst editierbar; Fragen/Antworten hinzufügen, entfernen und sortieren

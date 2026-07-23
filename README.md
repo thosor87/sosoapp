@@ -93,9 +93,9 @@ VITE_EMAILJS_PUBLIC_KEY=
 - **`registrations`** – Anmeldungen (Familie, Essen, Zelten)
 - **`timeline`** – Ablaufplan-Einträge (Zeit, Titel, Kategorie, Sichtbarkeit)
 - **`maps`** – Karten-Dokumente (Shapes als GeoJSON, Kartenposition, Backups)
-- **`quiz`** – Hochzeitsquiz „JaWort" (Titel, Einleitung, Lösungswort, Fragen, Admin-Passwort-Hash)
+- **`quiz`** – Hochzeitsquiz „Ja?Wort" (Titel, Einleitung, Lösungswort, Fragen, Admin-Passwort-Hash)
 
-## JaWort – Hochzeitsquiz 💍
+## Ja?Wort – Hochzeitsquiz 💍
 
 Ein eigenständiges Quiz für Hochzeiten, unabhängig von der Sommerfest-App und
 **ohne Magic-Link** – Gäste rufen es direkt per QR-Code auf.
