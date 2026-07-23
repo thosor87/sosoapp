@@ -98,6 +98,24 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // ── Hochzeitsquiz „JaWort" ──────────────────────────────
+    // Lesen: alle (Gäste rufen das Quiz per QR-Code auf)
+    // Erstellen/Ändern: mit Struktur-Validierung, kein Löschen
+    // (Admin-Zugang wird client-seitig per Passwort-Hash geprüft,
+    //  analog zur Sommerfest-App)
+    match /quiz/{quizId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.title is string
+                            && request.resource.data.title.size() > 0
+                            && request.resource.data.title.size() <= 200
+                            && request.resource.data.solutionWord is string
+                            && request.resource.data.solutionWord.size() <= 200
+                            && request.resource.data.questions is list
+                            && request.resource.data.questions.size() <= 50
+                            && request.resource.data.adminPasswordHash is string;
+      allow delete: if false;
+    }
+
     // ── Alles andere: gesperrt ──────────────────────────────
     match /{document=**} {
       allow read, write: if false;
