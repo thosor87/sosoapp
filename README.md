@@ -93,6 +93,33 @@ VITE_EMAILJS_PUBLIC_KEY=
 - **`registrations`** – Anmeldungen (Familie, Essen, Zelten)
 - **`timeline`** – Ablaufplan-Einträge (Zeit, Titel, Kategorie, Sichtbarkeit)
 - **`maps`** – Karten-Dokumente (Shapes als GeoJSON, Kartenposition, Backups)
+- **`quiz`** – Hochzeitsquiz „Ja?Wort" (Titel, Einleitung, Lösungswort, Fragen, Admin-Passwort-Hash)
+
+## Ja?Wort – Hochzeitsquiz 💍
+
+Ein eigenständiges Quiz für Hochzeiten, unabhängig von der Sommerfest-App und
+**ohne Magic-Link** – Gäste rufen es direkt per QR-Code auf.
+
+| Route | Beschreibung |
+|-------|--------------|
+| `/quiz` | Teilnehmer-Ansicht: sechs Fragen mit je vier Antworten, danach das Lösungswort |
+| `/quiz/admin` | Admin-Oberfläche (passwortgeschützt): Fragen, Antworten, Lösungswort & Passwort bearbeiten, QR-Code generieren |
+
+- **Standard-Admin-Passwort:** `trauung` (im Admin-Bereich änderbar)
+- **Erststart:** Beim ersten Aufruf werden automatisch Platzhalter-Fragen und ein
+  Beispiel-Lösungswort (`LIEBE`) in Firestore angelegt – alles über die
+  Admin-Oberfläche anpassbar.
+- **Spielablauf:** verzeihend – die Gäste können beliebig oft raten, bis die
+  richtige Antwort gewählt ist; danach erscheint das Lösungswort.
+
+### Deployment unter eigener Subdomain
+
+Die App wird als Teil des bestehenden Firebase-Hosting-Ziels ausgeliefert. Das
+Quiz ist damit unter `party.soring.de/quiz` erreichbar. Für eine eigene
+Subdomain (z. B. **`quiz.soring.de`**) genügt es, diese in der Firebase-Console
+als zusätzliche Custom-Domain auf **dieselbe** Hosting-Site zu zeigen – das Quiz
+ist dann unter `quiz.soring.de/quiz` erreichbar. Eine Multi-Site-Konfiguration
+ist nicht nötig.
 
 ## Scripts
 

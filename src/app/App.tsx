@@ -17,38 +17,73 @@ const AdminPage = lazy(() =>
   import('@/pages/AdminPage').then((m) => ({ default: m.AdminPage }))
 )
 
+// Hochzeitsquiz „Ja?Wort" – eigenständig, ohne Magic-Link-Zugang der Party-App
+const QuizPage = lazy(() =>
+  import('@/pages/QuizPage').then((m) => ({ default: m.QuizPage }))
+)
+const QuizAdminPage = lazy(() =>
+  import('@/pages/QuizAdminPage').then((m) => ({ default: m.QuizAdminPage }))
+)
+
+/** Die bestehende Sommerfest-App hinter dem Magic-Link-Gate. */
+function PartyApp() {
+  return (
+    <MagicLinkGate>
+      <Header />
+      <AnimatePresence mode="wait">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/uebersicht"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <OverviewPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <AdminPage />
+              </Suspense>
+            }
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AnimatePresence>
+      <Footer />
+    </MagicLinkGate>
+  )
+}
+
 export function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <MagicLinkGate>
-          <Header />
-          <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route
-                path="/uebersicht"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <OverviewPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <AdminPage />
-                  </Suspense>
-                }
-              />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </AnimatePresence>
-          <Footer />
-          <ToastContainer />
-        </MagicLinkGate>
+        <Routes>
+          {/* Hochzeitsquiz – öffentlich, per QR-Code erreichbar */}
+          <Route
+            path="/quiz"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <QuizPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/quiz/admin"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <QuizAdminPage />
+              </Suspense>
+            }
+          />
+          {/* Alles andere: bestehende Sommerfest-App */}
+          <Route path="/*" element={<PartyApp />} />
+        </Routes>
       </BrowserRouter>
+      <ToastContainer />
     </ErrorBoundary>
   )
 }
