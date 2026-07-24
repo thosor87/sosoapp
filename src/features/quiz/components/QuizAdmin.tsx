@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { useToastStore } from '@/components/feedback/Toast'
 import { useQuizStore } from '../store'
 import { usePhotoStore } from '../photoStore'
+import { FlowOverview } from './FlowOverview'
 import type { QuizQuestion, QrCode } from '../types'
 
 const MAX_OPTIONS = 6
@@ -302,6 +303,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
           Abmelden
         </Button>
       </div>
+
+      {/* Ablauf-Übersicht (live) */}
+      <FlowOverview qrCodes={qrCodes} />
 
       {/* App-QR-Codes (fest) */}
       <Card>

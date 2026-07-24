@@ -10,6 +10,7 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 - **Foto-Station `/foto`:** Foto-Upload mit clientseitiger Komprimierung (passt in Firestore), danach eigenes Lösungswort, konfigurierbarer Weiter-Button samt QR-Code und Hinweistext (what3words-Kontext)
 - **Foto-Galerie im Admin:** hochgeladene Fotos ansehen, herunterladen und löschen (Firestore-Collection `photos`)
 - **QR-Verwaltung im Admin:** feste App-QR-Codes (`/quiz`, `/quiz2`, `/foto`) zum direkten Ausdrucken plus beliebig viele konfigurierbare QR-Codes (Maps-Links, Sprachnachrichten) mit Live-Vorschau und Download
+- **Ablauf-Übersicht im Admin:** Live-Visualisierung beider Team-Wege mit Stationen, Lösungswort-Reihenfolge und den zugehörigen QR-Codes an jeder Station
 - Firestore-Rules: strukturelle Validierung der `photos`-Collection
 
 ### Ja?Wort – Hochzeitsquiz 💍

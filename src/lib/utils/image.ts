@@ -7,8 +7,8 @@ export async function compressImage(
   file: File,
   opts: { maxDim?: number; maxBytes?: number } = {}
 ): Promise<string> {
-  const maxDim = opts.maxDim ?? 1280
-  const maxBytes = opts.maxBytes ?? 700_000
+  const maxDim = opts.maxDim ?? 1600
+  const maxBytes = opts.maxBytes ?? 850_000
 
   const { source, width: srcW, height: srcH } = await loadDrawable(file)
 
