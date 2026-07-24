@@ -4,6 +4,15 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
 
+### Admin-Aufräumen: Tabs, Ablauf-Übersicht & Inline-QR-Bearbeitung 🧭
+
+- **Tab-Navigation** im Admin: Übersicht · Quiz · Foto · QR-Codes · Einstellungen (statt einer langen Seite)
+- **Ablauf-Übersicht neu:** breite, grafische Darstellung beider Team-Wege; QR-/Maps-Ziele direkt an der jeweiligen Station eintragbar; App-Links (Quiz/Quiz2/Foto) direkt öffenbar; alle QR-Codes sichtbar; gleiche QR-Codes werden automatisch überall übernommen
+- **QR-Codes-Tab** als reine Druck-Übersicht aller Codes (App-intern + konfiguriert)
+- **Backfill:** fehlende Felder werden in bestehenden Dokumenten automatisch ergänzt (behebt u. a. fehlenden „Weiter"-Button auf der Foto-Seite)
+- **Foto-Qualität** erhöht: max. 1600 px / ~850 KB
+- Admin nutzt mehr Breite (Übersicht), Formulare bleiben lesbar begrenzt; mobil-tauglich
+
 ### Rätsel-Rallye: Foto-Station, Team-Links & QR-Verwaltung 📸🗺️
 
 - **Team-spezifische Maps-Links:** Route `/quiz2` (Team 2) neben `/quiz` (Team 1). Fragen, Lösungswort und Text sind identisch; nach dem Lösungswort erscheint je Team ein eigener Google-Maps-Link zur nächsten Station

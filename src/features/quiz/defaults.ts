@@ -85,3 +85,27 @@ export const DEFAULT_QUESTIONS: QuizQuestion[] = [
     correctIndex: 0,
   },
 ]
+
+/**
+ * Alle konfigurierbaren Standard-Felder (ohne Passwort/Timestamp).
+ * Dient sowohl dem Erst-Seed als auch dem Backfill fehlender Felder in
+ * bestehenden Dokumenten.
+ */
+export const DEFAULT_CONFIG_FIELDS = {
+  title: DEFAULT_TITLE,
+  intro: DEFAULT_INTRO,
+  solutionWord: DEFAULT_SOLUTION_WORD,
+  solutionMessage: DEFAULT_SOLUTION_MESSAGE,
+  mapsLinkLabel: DEFAULT_MAPS_LABEL,
+  mapsLinkTeam1: '',
+  mapsLinkTeam2: '',
+  fotoTitle: DEFAULT_FOTO_TITLE,
+  fotoIntro: DEFAULT_FOTO_INTRO,
+  fotoSolutionWord: DEFAULT_FOTO_SOLUTION_WORD,
+  fotoMessage: DEFAULT_FOTO_MESSAGE,
+  fotoNextLabel: DEFAULT_FOTO_NEXT_LABEL,
+  fotoNextUrl: DEFAULT_FOTO_NEXT_URL,
+  fotoNote: DEFAULT_FOTO_NOTE,
+  qrCodes: DEFAULT_QR_CODES,
+  questions: DEFAULT_QUESTIONS,
+} as const

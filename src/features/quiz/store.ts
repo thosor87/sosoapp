@@ -12,20 +12,7 @@ import type { QuizConfig } from './types'
 import {
   QUIZ_DOC_ID,
   DEFAULT_ADMIN_PASSWORD,
-  DEFAULT_TITLE,
-  DEFAULT_INTRO,
-  DEFAULT_SOLUTION_WORD,
-  DEFAULT_SOLUTION_MESSAGE,
-  DEFAULT_MAPS_LABEL,
-  DEFAULT_FOTO_TITLE,
-  DEFAULT_FOTO_INTRO,
-  DEFAULT_FOTO_SOLUTION_WORD,
-  DEFAULT_FOTO_MESSAGE,
-  DEFAULT_FOTO_NEXT_LABEL,
-  DEFAULT_FOTO_NEXT_URL,
-  DEFAULT_FOTO_NOTE,
-  DEFAULT_QR_CODES,
-  DEFAULT_QUESTIONS,
+  DEFAULT_CONFIG_FIELDS,
 } from './defaults'
 
 const ADMIN_SESSION_KEY = 'jawort-admin'
@@ -57,32 +44,35 @@ async function seedDefault() {
     const adminPasswordHash = await sha256hex(DEFAULT_ADMIN_PASSWORD)
     await setDoc(
       quizDocRef(),
-      {
-        title: DEFAULT_TITLE,
-        intro: DEFAULT_INTRO,
-        solutionWord: DEFAULT_SOLUTION_WORD,
-        solutionMessage: DEFAULT_SOLUTION_MESSAGE,
-        mapsLinkLabel: DEFAULT_MAPS_LABEL,
-        mapsLinkTeam1: '',
-        mapsLinkTeam2: '',
-        fotoTitle: DEFAULT_FOTO_TITLE,
-        fotoIntro: DEFAULT_FOTO_INTRO,
-        fotoSolutionWord: DEFAULT_FOTO_SOLUTION_WORD,
-        fotoMessage: DEFAULT_FOTO_MESSAGE,
-        fotoNextLabel: DEFAULT_FOTO_NEXT_LABEL,
-        fotoNextUrl: DEFAULT_FOTO_NEXT_URL,
-        fotoNote: DEFAULT_FOTO_NOTE,
-        qrCodes: DEFAULT_QR_CODES,
-        adminPasswordHash,
-        questions: DEFAULT_QUESTIONS,
-        updatedAt: serverTimestamp(),
-      },
+      { ...DEFAULT_CONFIG_FIELDS, adminPasswordHash, updatedAt: serverTimestamp() },
       { merge: true }
     )
   } catch (err) {
     console.error('Quiz seed failed:', err)
   } finally {
     seeding = false
+  }
+}
+
+let backfilled = false
+
+/**
+ * Ergänzt in einem bestehenden Dokument fehlende Standard-Felder (z. B. wenn
+ * neue Funktionen hinzugekommen sind, nachdem das Dokument angelegt wurde).
+ * Läuft nur einmal pro Session und nur, wenn wirklich Felder fehlen.
+ */
+async function backfillMissing(data: Record<string, unknown>) {
+  if (backfilled) return
+  const patch: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(DEFAULT_CONFIG_FIELDS)) {
+    if (data[key] === undefined) patch[key] = value
+  }
+  if (Object.keys(patch).length === 0) return
+  backfilled = true
+  try {
+    await setDoc(quizDocRef(), patch, { merge: true })
+  } catch (err) {
+    console.error('Quiz backfill failed:', err)
   }
 }
 
@@ -101,7 +91,9 @@ export const useQuizStore = create<QuizState>((set, get) => ({
           set({ isLoading: false })
           return
         }
-        set({ config: snap.data() as QuizConfig, isLoading: false })
+        const data = snap.data() as QuizConfig
+        set({ config: data, isLoading: false })
+        void backfillMissing(data as unknown as Record<string, unknown>)
       },
       (err) => {
         console.error('Quiz listener error:', err)

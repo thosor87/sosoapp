@@ -13,6 +13,16 @@ import type { QuizQuestion, QrCode } from '../types'
 const MAX_OPTIONS = 6
 const MIN_OPTIONS = 2
 
+type TabKey = 'overview' | 'quiz' | 'foto' | 'qr' | 'settings'
+
+const TABS: { key: TabKey; label: string; icon: string }[] = [
+  { key: 'overview', label: 'Übersicht', icon: '🗺️' },
+  { key: 'quiz', label: 'Quiz', icon: '🧩' },
+  { key: 'foto', label: 'Foto', icon: '📸' },
+  { key: 'qr', label: 'QR-Codes', icon: '▣' },
+  { key: 'settings', label: 'Einstellungen', icon: '⚙️' },
+]
+
 /** Erzeugt eine kurze, eindeutige Frage-ID. */
 function newId() {
   return 'q' + Math.random().toString(36).slice(2, 8)
@@ -165,19 +175,10 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   )
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
-  const [qrTeam1, setQrTeam1] = useState('')
-  const [qrTeam2, setQrTeam2] = useState('')
-
-  const [qrFoto, setQrFoto] = useState('')
+  const [tab, setTab] = useState<TabKey>('overview')
   const urlTeam1 = `${window.location.origin}/quiz`
   const urlTeam2 = `${window.location.origin}/quiz2`
   const urlFoto = `${window.location.origin}/foto`
-
-  useEffect(() => {
-    QRCode.toDataURL(urlTeam1, { width: 320, margin: 1 }).then(setQrTeam1).catch(() => setQrTeam1(''))
-    QRCode.toDataURL(urlTeam2, { width: 320, margin: 1 }).then(setQrTeam2).catch(() => setQrTeam2(''))
-    QRCode.toDataURL(urlFoto, { width: 320, margin: 1 }).then(setQrFoto).catch(() => setQrFoto(''))
-  }, [urlTeam1, urlTeam2, urlFoto])
 
   const updateQuestion = (id: string, patch: Partial<QuizQuestion>) => {
     setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)))
@@ -296,76 +297,84 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 space-y-8">
+      <div className="mx-auto flex w-full max-w-2xl items-center justify-between">
         <h1 className="text-2xl font-bold text-warm-800">Quiz bearbeiten</h1>
         <Button variant="ghost" size="sm" onClick={onLogout}>
           Abmelden
         </Button>
       </div>
 
-      {/* Ablauf-Übersicht (live) */}
-      <FlowOverview qrCodes={qrCodes} />
+      {/* Tab-Navigation */}
+      <div className="sticky top-0 z-20 -mx-4 flex gap-1 overflow-x-auto border-b border-warm-100 bg-[#FFFBF5]/90 px-4 py-2 backdrop-blur">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={`flex-none rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+              tab === t.key ? 'bg-primary-500 text-white' : 'text-warm-600 hover:bg-warm-100'
+            }`}
+          >
+            <span className="mr-1">{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-      {/* App-QR-Codes (fest) */}
-      <Card>
-        <CardContent className="pt-6">
-          <h2 className="font-semibold text-warm-800 mb-1">App-QR-Codes (fest)</h2>
-          <p className="text-sm text-warm-500 mb-4">
-            Diese QR-Codes zeigen direkt auf die App-Stationen – nichts einzutragen,
-            einfach ausdrucken.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <QrBlock title="Quiz – Team 1 (/quiz)" qr={qrTeam1} url={urlTeam1} onCopy={copyLink} downloadName="qr-quiz-team1.png" />
-            <QrBlock title="Quiz – Team 2 (/quiz2)" qr={qrTeam2} url={urlTeam2} onCopy={copyLink} downloadName="qr-quiz-team2.png" />
-            <QrBlock title="Foto-Station (/foto)" qr={qrFoto} url={urlFoto} onCopy={copyLink} downloadName="qr-foto.png" />
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Übersicht ─────────────────────────────────────── */}
+      {tab === 'overview' && (
+        <FlowOverview
+          qrCodes={qrCodes}
+          setQrCodes={setQrCodes}
+          mapsLinkTeam1={mapsLinkTeam1}
+          setMapsLinkTeam1={setMapsLinkTeam1}
+          mapsLinkTeam2={mapsLinkTeam2}
+          setMapsLinkTeam2={setMapsLinkTeam2}
+        />
+      )}
 
-      {/* Weitere QR-Codes (konfigurierbar) */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="font-semibold text-warm-800">Weitere QR-Codes</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setQrCodes((qs) => [
-                  ...qs,
-                  { id: newId(), label: 'Neuer QR-Code', url: '' },
-                ])
-              }
-            >
-              + QR-Code
-            </Button>
-          </div>
-          <p className="text-sm text-warm-500 mb-4">
-            Für Maps-Links, Sprachnachrichten usw. Ziel als vollständige URL
-            eintragen – der QR-Code wird automatisch erzeugt.
-          </p>
-          <div className="space-y-4">
-            {qrCodes.length === 0 && (
-              <p className="text-sm text-warm-400 text-center py-2">
-                Noch keine weiteren QR-Codes.
+      {/* ── QR-Codes: Druck-Übersicht ─────────────────────── */}
+      {tab === 'qr' && (
+        <div className="mx-auto max-w-3xl">
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="font-semibold text-warm-800 mb-1">
+                Alle QR-Codes zum Ausdrucken
+              </h2>
+              <p className="text-sm text-warm-500 mb-4">
+                Feste App-QR-Codes und die im Tab „Übersicht" eingetragenen Ziele.
+                Ziele ändern? Einfach in die <strong>Übersicht</strong> wechseln.
               </p>
-            )}
-            {qrCodes.map((qc) => (
-              <QrManagerItem
-                key={qc.id}
-                item={qc}
-                onChange={(patch) =>
-                  setQrCodes((qs) => qs.map((q) => (q.id === qc.id ? { ...q, ...patch } : q)))
-                }
-                onRemove={() => setQrCodes((qs) => qs.filter((q) => q.id !== qc.id))}
-                onCopy={copyLink}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <QrPrintTile label="Quiz – Team 1" url={urlTeam1} onCopy={copyLink} />
+                <QrPrintTile label="Quiz – Team 2" url={urlTeam2} onCopy={copyLink} />
+                <QrPrintTile label="Foto-Station" url={urlFoto} onCopy={copyLink} />
+                {qrCodes
+                  .filter((q) => q.url.trim())
+                  .map((q) => (
+                    <QrPrintTile
+                      key={q.id}
+                      label={q.label}
+                      url={toAbsolute(q.url)}
+                      onCopy={copyLink}
+                    />
+                  ))}
+              </div>
+              {qrCodes.some((q) => !q.url.trim()) && (
+                <p className="mt-4 text-xs text-amber-600">
+                  {qrCodes.filter((q) => !q.url.trim()).length} QR-Code(s) ohne Ziel –
+                  in der Übersicht ergänzen.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
+      {/* ── Quiz ──────────────────────────────────────────── */}
+      {tab === 'quiz' && (
+        <div className="mx-auto max-w-2xl space-y-8">
       {/* Grundeinstellungen */}
       <Card>
         <CardContent className="pt-6 space-y-4">
@@ -420,7 +429,12 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
           />
         </CardContent>
       </Card>
+        </div>
+      )}
 
+      {/* ── Foto ──────────────────────────────────────────── */}
+      {tab === 'foto' && (
+        <div className="mx-auto max-w-2xl space-y-8">
       {/* Foto-Station (/foto) */}
       <Card>
         <CardContent className="pt-6 space-y-4">
@@ -474,9 +488,12 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
 
       {/* Foto-Galerie */}
       <PhotoGallery notify={notify} />
+        </div>
+      )}
 
-      {/* Fragen */}
-      <div className="space-y-4">
+      {/* ── Fragen (Teil von „Quiz") ──────────────────────── */}
+      {tab === 'quiz' && (
+        <div className="mx-auto max-w-2xl space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-warm-800">
             Fragen ({questions.length})
@@ -574,8 +591,12 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
+      {/* ── Einstellungen ─────────────────────────────────── */}
+      {tab === 'settings' && (
+        <div className="mx-auto max-w-2xl space-y-8">
       {/* Passwort ändern */}
       <Card>
         <CardContent className="pt-6 space-y-3">
@@ -592,9 +613,11 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
           />
         </CardContent>
       </Card>
+        </div>
+      )}
 
       {/* Speichern (sticky) */}
-      <div className="sticky bottom-4 z-10">
+      <div className="sticky bottom-4 z-10 mx-auto max-w-2xl">
         <Button
           size="lg"
           className="w-full shadow-lg"
@@ -608,51 +631,7 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   )
 }
 
-/* ── QR-Block je Team ──────────────────────────────────── */
-
-function QrBlock({
-  title,
-  qr,
-  url,
-  onCopy,
-  downloadName,
-}: {
-  title: string
-  qr: string
-  url: string
-  onCopy: (url: string) => void
-  downloadName: string
-}) {
-  return (
-    <div className="rounded-xl border border-warm-100 p-4 text-center">
-      <p className="mb-2 text-sm font-semibold text-primary-600">{title}</p>
-      {qr && (
-        <img
-          src={qr}
-          alt={`QR-Code ${title}`}
-          className="mx-auto h-36 w-36 rounded-lg border border-warm-100"
-        />
-      )}
-      <div className="mt-3 flex gap-2">
-        <Input readOnly value={url} className="flex-1 text-xs" />
-        <Button variant="outline" size="sm" onClick={() => onCopy(url)}>
-          Kopieren
-        </Button>
-      </div>
-      {qr && (
-        <a
-          href={qr}
-          download={downloadName}
-          className="mt-2 inline-block text-sm text-primary-600 underline hover:text-primary-700"
-        >
-          QR herunterladen
-        </a>
-      )}
-    </div>
-  )
-}
-
-/* ── Konfigurierbarer QR-Code ──────────────────────────── */
+/* ── QR-Druckkachel (schreibgeschützt) ─────────────────── */
 
 /** Interner Pfad oder volle URL → absolute URL (für Anzeige & QR). */
 function toAbsolute(url: string): string {
@@ -663,24 +642,21 @@ function toAbsolute(url: string): string {
   return `https://${trimmed}`
 }
 
-function QrManagerItem({
-  item,
-  onChange,
-  onRemove,
+function QrPrintTile({
+  label,
+  url,
   onCopy,
 }: {
-  item: QrCode
-  onChange: (patch: Partial<QrCode>) => void
-  onRemove: () => void
+  label: string
+  url: string
   onCopy: (url: string) => void
 }) {
   const [qr, setQr] = useState('')
-  const abs = toAbsolute(item.url)
 
   useEffect(() => {
-    if (!abs) return
+    if (!url) return
     let cancelled = false
-    QRCode.toDataURL(abs, { width: 320, margin: 1 })
+    QRCode.toDataURL(url, { width: 320, margin: 1 })
       .then((d) => {
         if (!cancelled) setQr(d)
       })
@@ -688,62 +664,36 @@ function QrManagerItem({
     return () => {
       cancelled = true
     }
-  }, [abs])
+  }, [url])
 
-  const slug = (item.label || 'qr-code').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
   return (
-    <div className="rounded-xl border border-warm-100 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="flex-none text-center">
-          {abs && qr ? (
-            <>
-              <img
-                src={qr}
-                alt={`QR-Code ${item.label}`}
-                className="mx-auto h-28 w-28 rounded-lg border border-warm-100"
-              />
-              <a
-                href={qr}
-                download={`qr-${slug}.png`}
-                className="mt-1 inline-block text-xs text-primary-600 underline hover:text-primary-700"
-              >
-                Download
-              </a>
-            </>
-          ) : (
-            <div className="flex h-28 w-28 items-center justify-center rounded-lg border border-dashed border-warm-200 text-center text-[11px] text-warm-400">
-              Ziel eintragen, um den QR-Code zu erzeugen
-            </div>
-          )}
+    <div className="flex flex-col items-center rounded-xl border border-warm-100 p-4 text-center">
+      <p className="mb-2 text-sm font-semibold text-primary-600">{label}</p>
+      {qr ? (
+        <img src={qr} alt={`QR-Code ${label}`} className="h-32 w-32 rounded-lg border border-warm-100" />
+      ) : (
+        <div className="flex h-32 w-32 items-center justify-center rounded-lg border border-dashed border-warm-200 text-[11px] text-warm-400">
+          kein Ziel
         </div>
-        <div className="flex-1 space-y-2">
-          <Input
-            value={item.label}
-            onChange={(e) => onChange({ label: e.target.value })}
-            placeholder="Bezeichnung"
-          />
-          <div className="flex gap-2">
-            <Input
-              value={item.url}
-              onChange={(e) => onChange({ url: e.target.value })}
-              placeholder="https://… oder /pfad"
-              className="flex-1 text-sm"
-            />
-            {abs && (
-              <Button variant="outline" size="sm" onClick={() => onCopy(abs)}>
-                Kopieren
-              </Button>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="text-xs text-red-500 hover:text-red-600 cursor-pointer"
-          >
-            Entfernen
-          </button>
-        </div>
+      )}
+      <p className="mt-2 w-full truncate text-[11px] text-warm-400" title={url}>
+        {url}
+      </p>
+      <div className="mt-2 flex gap-3 text-xs">
+        {qr && (
+          <a href={qr} download={`qr-${slug}.png`} className="text-primary-600 underline hover:text-primary-700">
+            Download
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={() => onCopy(url)}
+          className="text-warm-500 underline hover:text-warm-700 cursor-pointer"
+        >
+          Link
+        </button>
       </div>
     </div>
   )
