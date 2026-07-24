@@ -4,6 +4,13 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
 
+### Sprachnachricht-Stationen 🔊
+
+- Zwei neue App-Stationen `/see1` und `/see2`: spielen eine hinterlegte Sprachnachricht ab (Audio in der App, kein externer Link)
+- Audio-Upload im Admin (Tab „Sprache") mit Player, Ersetzen/Löschen; Titel und Text je Station konfigurierbar
+- Audio wird in Firestore gespeichert (Collection `audio`, Größenbegrenzung < 1 MB); Firestore-Rules ergänzt
+- Ablauf-Übersicht: See 1/See 2 sind jetzt feste App-QR-Codes (`/see1`, `/see2`) statt konfigurierbarer Links; QR-Druck-Übersicht entsprechend erweitert
+
 ### Admin-Aufräumen: Tabs, Ablauf-Übersicht & Inline-QR-Bearbeitung 🧭
 
 - **Tab-Navigation** im Admin: Übersicht · Quiz · Foto · QR-Codes · Einstellungen (statt einer langen Seite)

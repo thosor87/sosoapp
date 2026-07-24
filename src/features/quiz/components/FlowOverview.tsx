@@ -12,7 +12,7 @@ import type { QrCode } from '../types'
    - maps:  In-App-Link nach dem Quiz (kein Ausdruck-QR) – hier direkt editierbar */
 
 type Via =
-  | { kind: 'appqr'; path: '/quiz' | '/quiz2' | '/foto'; label: string }
+  | { kind: 'appqr'; path: '/quiz' | '/quiz2' | '/foto' | '/see1' | '/see2'; label: string }
   | { kind: 'cfg'; ref: string; label: string }
   | { kind: 'maps'; team: 1 | 2; label: string }
 
@@ -30,8 +30,6 @@ interface Station {
 /** Labels für die konfigurierbaren QR-Codes (für Upsert). */
 const CFG_LABELS: Record<string, string> = {
   lk2: 'Lichterkette – Team 2 → See 2 (Maps)',
-  see1: 'See 1 – Sprachnachricht (Team 1)',
-  see2: 'See 2 – Sprachnachricht (Team 2)',
   buch: 'Buch (Brücke) → Rutsche (Maps)',
 }
 
@@ -45,7 +43,7 @@ const TEAM1: Station[] = [
   START,
   { via: { kind: 'appqr', path: '/quiz', label: 'QR an der Lichterkette' }, emoji: '🧩', title: 'Quiz', appPath: '/quiz', desc: '6 Fragen → Lösungswort + Maps-Link.', word: 1, wordLabel: 'Quiz' },
   { via: { kind: 'maps', team: 1, label: 'Maps-Link nach dem Quiz' }, emoji: '🌊', title: 'See 1', desc: 'Am Ufer hängt ein QR-Code mit einer Sprachnachricht.' },
-  { via: { kind: 'cfg', ref: 'see1', label: 'QR: Sprachnachricht (See 1)' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'Unter der Brücke ein Buch: Text, Lösungswort und ein QR-Code als Bild.', word: 2, wordLabel: 'Buch' },
+  { via: { kind: 'appqr', path: '/see1', label: 'QR am See 1 → Sprachnachricht' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'Die Sprachnachricht schickt euch zur Brücke. Unter der Brücke ein Buch: Text, Lösungswort und ein QR-Code als Bild.', word: 2, wordLabel: 'Buch' },
   { via: { kind: 'cfg', ref: 'buch', label: 'QR-Bild im Buch' }, emoji: '🛝', title: 'Rutsche', desc: 'An der Rutsche hängt der QR-Code der Foto-Station.' },
   { via: { kind: 'appqr', path: '/foto', label: 'QR an der Rutsche' }, emoji: '📸', title: 'Foto', appPath: '/foto', desc: 'Foto hochladen → Lösungswort.', word: 3, wordLabel: 'Foto' },
   { emoji: '🎯', title: 'what3words', desc: 'Reihenfolge: Quiz · Buch · Foto → Ziel finden.', goal: true },
@@ -54,7 +52,7 @@ const TEAM1: Station[] = [
 const TEAM2: Station[] = [
   START,
   { via: { kind: 'cfg', ref: 'lk2', label: 'QR an der Lichterkette' }, emoji: '🌊', title: 'See 2', desc: 'Etwas anderer Ort. Am Ufer ein QR-Code mit Sprachnachricht.' },
-  { via: { kind: 'cfg', ref: 'see2', label: 'QR: Sprachnachricht (See 2)' }, emoji: '🛝', title: 'Rutsche', desc: 'An der Rutsche hängt der QR-Code der Foto-Station.' },
+  { via: { kind: 'appqr', path: '/see2', label: 'QR am See 2 → Sprachnachricht' }, emoji: '🛝', title: 'Rutsche', desc: 'Die Sprachnachricht schickt euch zur Rutsche. Dort hängt der QR-Code der Foto-Station.' },
   { via: { kind: 'appqr', path: '/foto', label: 'QR an der Rutsche' }, emoji: '📸', title: 'Foto', appPath: '/foto', desc: 'Foto hochladen → Lösungswort + Link zum Quiz.', word: 1, wordLabel: 'Foto' },
   { via: { kind: 'appqr', path: '/quiz2', label: 'Link/QR auf der Foto-Seite' }, emoji: '🧩', title: 'Quiz 2', appPath: '/quiz2', desc: '6 Fragen → Lösungswort + Maps-Link.', word: 2, wordLabel: 'Quiz' },
   { via: { kind: 'maps', team: 2, label: 'Maps-Link nach dem Quiz' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'Das Buch unter der Brücke: Text und Lösungswort.', word: 3, wordLabel: 'Buch' },

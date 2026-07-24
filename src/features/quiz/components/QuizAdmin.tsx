@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -7,18 +7,20 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { useToastStore } from '@/components/feedback/Toast'
 import { useQuizStore } from '../store'
 import { usePhotoStore } from '../photoStore'
+import { useAudioStore, MAX_AUDIO_BYTES, type AudioStation } from '../audioStore'
 import { FlowOverview } from './FlowOverview'
 import type { QuizQuestion, QrCode } from '../types'
 
 const MAX_OPTIONS = 6
 const MIN_OPTIONS = 2
 
-type TabKey = 'overview' | 'quiz' | 'foto' | 'qr' | 'settings'
+type TabKey = 'overview' | 'quiz' | 'foto' | 'audio' | 'qr' | 'settings'
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'overview', label: 'Übersicht', icon: '🗺️' },
   { key: 'quiz', label: 'Quiz', icon: '🧩' },
   { key: 'foto', label: 'Foto', icon: '📸' },
+  { key: 'audio', label: 'Sprache', icon: '🔊' },
   { key: 'qr', label: 'QR-Codes', icon: '▣' },
   { key: 'settings', label: 'Einstellungen', icon: '⚙️' },
 ]
@@ -142,6 +144,10 @@ interface EditorProps {
     fotoNextLabel: string
     fotoNextUrl: string
     fotoNote: string
+    see1Title: string
+    see1Text: string
+    see2Title: string
+    see2Text: string
     qrCodes: QrCode[]
     questions: QuizQuestion[]
   }) => Promise<void>
@@ -167,6 +173,10 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const [fotoNextLabel, setFotoNextLabel] = useState(initial.fotoNextLabel ?? 'Weiter zum Quiz')
   const [fotoNextUrl, setFotoNextUrl] = useState(initial.fotoNextUrl ?? '/quiz2')
   const [fotoNote, setFotoNote] = useState(initial.fotoNote ?? '')
+  const [see1Title, setSee1Title] = useState(initial.see1Title ?? 'Sprachnachricht 🔊')
+  const [see1Text, setSee1Text] = useState(initial.see1Text ?? '')
+  const [see2Title, setSee2Title] = useState(initial.see2Title ?? 'Sprachnachricht 🔊')
+  const [see2Text, setSee2Text] = useState(initial.see2Text ?? '')
   const [qrCodes, setQrCodes] = useState<QrCode[]>(
     (initial.qrCodes ?? []).map((q) => ({ ...q }))
   )
@@ -179,6 +189,8 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const urlTeam1 = `${window.location.origin}/quiz`
   const urlTeam2 = `${window.location.origin}/quiz2`
   const urlFoto = `${window.location.origin}/foto`
+  const urlSee1 = `${window.location.origin}/see1`
+  const urlSee2 = `${window.location.origin}/see2`
 
   const updateQuestion = (id: string, patch: Partial<QuizQuestion>) => {
     setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)))
@@ -274,6 +286,10 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         fotoNextLabel: fotoNextLabel.trim(),
         fotoNextUrl: fotoNextUrl.trim(),
         fotoNote,
+        see1Title: see1Title.trim(),
+        see1Text,
+        see2Title: see2Title.trim(),
+        see2Text,
         qrCodes: qrCodes.map((q) => ({ ...q, label: q.label.trim(), url: q.url.trim() })),
         questions,
       })
@@ -350,6 +366,8 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
                 <QrPrintTile label="Quiz – Team 1" url={urlTeam1} onCopy={copyLink} />
                 <QrPrintTile label="Quiz – Team 2" url={urlTeam2} onCopy={copyLink} />
                 <QrPrintTile label="Foto-Station" url={urlFoto} onCopy={copyLink} />
+                <QrPrintTile label="See 1 – Sprachnachricht" url={urlSee1} onCopy={copyLink} />
+                <QrPrintTile label="See 2 – Sprachnachricht" url={urlSee2} onCopy={copyLink} />
                 {qrCodes
                   .filter((q) => q.url.trim())
                   .map((q) => (
@@ -488,6 +506,35 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
 
       {/* Foto-Galerie */}
       <PhotoGallery notify={notify} />
+        </div>
+      )}
+
+      {/* ── Sprachnachrichten ─────────────────────────────── */}
+      {tab === 'audio' && (
+        <div className="mx-auto max-w-2xl space-y-8">
+          <p className="text-sm text-warm-500">
+            Zwei Sprachnachricht-Stationen. Die QR-Codes dafür (`/see1`, `/see2`)
+            findet ihr im Tab „QR-Codes". Titel und Text sowie die Audiodatei sind
+            hier einstellbar.
+          </p>
+          <AudioStationEditor
+            station="see1"
+            heading="See 1 – Sprachnachricht (Team 1 → Brücke)"
+            title={see1Title}
+            setTitle={setSee1Title}
+            text={see1Text}
+            setText={setSee1Text}
+            notify={notify}
+          />
+          <AudioStationEditor
+            station="see2"
+            heading="See 2 – Sprachnachricht (Team 2 → Rutsche)"
+            title={see2Title}
+            setTitle={setSee2Title}
+            text={see2Text}
+            setText={setSee2Text}
+            notify={notify}
+          />
         </div>
       )}
 
@@ -768,6 +815,138 @@ function PhotoGallery({
             ))}
           </div>
         )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── Sprachnachricht-Station (Audio-Upload) ────────────── */
+
+function AudioStationEditor({
+  station,
+  heading,
+  title,
+  setTitle,
+  text,
+  setText,
+  notify,
+}: {
+  station: AudioStation
+  heading: string
+  title: string
+  setTitle: (v: string) => void
+  text: string
+  setText: (v: string) => void
+  notify: (msg: string, type?: 'success' | 'error' | 'info') => void
+}) {
+  const audio = useAudioStore((s) => s.audios[station])
+  const subscribe = useAudioStore((s) => s.subscribe)
+  const uploadAudio = useAudioStore((s) => s.uploadAudio)
+  const deleteAudio = useAudioStore((s) => s.deleteAudio)
+  const [busy, setBusy] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const unsub = subscribe(station)
+    return () => unsub()
+  }, [subscribe, station])
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBusy(true)
+    const reader = new FileReader()
+    reader.onload = async () => {
+      try {
+        const data = reader.result as string
+        if (data.length > MAX_AUDIO_BYTES) {
+          notify('Audiodatei zu groß (max. ~0,9 MB). Bitte eine kürzere/kleinere Aufnahme verwenden.', 'error')
+          return
+        }
+        await uploadAudio(station, data)
+        notify('Sprachnachricht gespeichert', 'success')
+      } catch {
+        notify('Upload fehlgeschlagen', 'error')
+      } finally {
+        setBusy(false)
+        if (inputRef.current) inputRef.current.value = ''
+      }
+    }
+    reader.onerror = () => {
+      notify('Datei konnte nicht gelesen werden', 'error')
+      setBusy(false)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm('Sprachnachricht wirklich löschen?')) return
+    try {
+      await deleteAudio(station)
+      notify('Sprachnachricht gelöscht', 'success')
+    } catch {
+      notify('Löschen fehlgeschlagen', 'error')
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        <h2 className="font-semibold text-warm-800">{heading}</h2>
+        <Input label="Titel" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Textarea
+          label="Text (unter dem Player)"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={2}
+        />
+
+        <div>
+          <p className="mb-1.5 text-sm font-medium text-warm-700">Audiodatei</p>
+          {audio === undefined ? (
+            <p className="text-sm text-warm-400">lädt…</p>
+          ) : audio ? (
+            <div className="space-y-2">
+              <audio controls src={audio} className="w-full" />
+              <div className="flex gap-3 text-sm">
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  className="text-primary-600 underline hover:text-primary-700 cursor-pointer"
+                  disabled={busy}
+                >
+                  Ersetzen
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="text-red-500 underline hover:text-red-600 cursor-pointer"
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={busy}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary-300 bg-primary-50/50 px-4 py-6 text-primary-700 transition-colors hover:bg-primary-50 disabled:opacity-50 cursor-pointer"
+            >
+              {busy ? 'Wird hochgeladen…' : '🔊 Audiodatei auswählen'}
+            </button>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFile}
+            className="hidden"
+          />
+          <p className="mt-1.5 text-xs text-warm-400">
+            Kurze Aufnahme (max. ~0,9 MB). Tipp: als MP3/M4A mit niedriger Bitrate.
+          </p>
+        </div>
       </CardContent>
     </Card>
   )

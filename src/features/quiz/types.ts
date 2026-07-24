@@ -55,6 +55,16 @@ export interface QuizConfig {
   /** Hinweistext unter dem Weiter-Button (what3words-Kontext). */
   fotoNote: string
 
+  /* ── Sprachnachricht-Stationen (/see1, /see2) ─────────── */
+  /** Überschrift der Sprachnachricht-Seite – See 1 (Team 1). */
+  see1Title: string
+  /** Text unter dem Player – See 1 (Team 1). */
+  see1Text: string
+  /** Überschrift der Sprachnachricht-Seite – See 2 (Team 2). */
+  see2Title: string
+  /** Text unter dem Player – See 2 (Team 2). */
+  see2Text: string
+
   /** Frei konfigurierbare QR-Codes für die Rätsel-Rallye (zum Ausdrucken). */
   qrCodes: QrCode[]
 
