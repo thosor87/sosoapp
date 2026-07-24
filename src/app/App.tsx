@@ -24,6 +24,9 @@ const QuizPage = lazy(() =>
 const QuizAdminPage = lazy(() =>
   import('@/pages/QuizAdminPage').then((m) => ({ default: m.QuizAdminPage }))
 )
+const FotoPage = lazy(() =>
+  import('@/pages/FotoPage').then((m) => ({ default: m.FotoPage }))
+)
 
 /** Die bestehende Sommerfest-App hinter dem Magic-Link-Gate. */
 function PartyApp() {
@@ -77,6 +80,15 @@ export function App() {
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <QuizPage team={2} />
+              </Suspense>
+            }
+          />
+          {/* Foto-Upload-Station */}
+          <Route
+            path="/foto"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <FotoPage />
               </Suspense>
             }
           />

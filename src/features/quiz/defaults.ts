@@ -1,4 +1,4 @@
-import type { QuizQuestion } from './types'
+import type { QuizQuestion, QrCode } from './types'
 
 /** Firestore-Dokument-ID des Quiz. */
 export const QUIZ_DOC_ID = 'wedding'
@@ -19,6 +19,29 @@ export const DEFAULT_SOLUTION_MESSAGE =
   'Herzlichen Glückwunsch – ihr habt es geschafft! 💍'
 
 export const DEFAULT_MAPS_LABEL = 'Weiter zur nächsten Station 📍'
+
+/* ── Foto-Station (/foto) ─────────────────────────────────── */
+export const DEFAULT_FOTO_TITLE = 'Foto-Station 📸'
+export const DEFAULT_FOTO_INTRO =
+  'Ladet hier ein gemeinsames Foto von euch hoch – danach bekommt ihr euer nächstes Lösungswort.'
+export const DEFAULT_FOTO_SOLUTION_WORD = 'FREUDE'
+export const DEFAULT_FOTO_MESSAGE = 'Super – euer Foto ist gespeichert! 📸'
+export const DEFAULT_FOTO_NEXT_LABEL = 'Weiter zum Quiz'
+export const DEFAULT_FOTO_NEXT_URL = '/quiz2'
+export const DEFAULT_FOTO_NOTE =
+  'Das Quiz müsst ihr natürlich nur ausfüllen, wenn ihr schon drei Wörter beisammen habt. 😉'
+
+/**
+ * Zusätzliche (externe) QR-Codes entlang des Rätsel-Ablaufs, deren Ziele ihr
+ * selbst eintragt (Maps-Links, Sprachnachrichten). Die App-internen QR-Codes
+ * (Quiz 1, Quiz 2, Foto) sind fest und müssen nicht eingegeben werden.
+ */
+export const DEFAULT_QR_CODES: QrCode[] = [
+  { id: 'lk2', label: 'Lichterkette – Team 2 → See 2 (Maps)', url: '' },
+  { id: 'see1', label: 'See 1 – Sprachnachricht (Team 1)', url: '' },
+  { id: 'see2', label: 'See 2 – Sprachnachricht (Team 2)', url: '' },
+  { id: 'buch', label: 'Buch (Brücke) → Rutsche (Maps)', url: '' },
+]
 
 /**
  * Beispiel-Fragen als Platzhalter. Können vollständig über die
