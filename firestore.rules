@@ -116,6 +116,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ── Foto-Uploads (Foto-Station) ─────────────────────────
+    // Lesen: alle (Admin-Galerie) | Erstellen: nur mit Bilddaten
+    // (Data-URL, Größe begrenzt, damit das Dokument < 1 MB bleibt)
+    // Ändern: nicht erlaubt | Löschen: erlaubt (Admin-Galerie)
+    match /photos/{photoId} {
+      allow read: if true;
+      allow create: if request.resource.data.imageData is string
+                    && request.resource.data.imageData.size() > 0
+                    && request.resource.data.imageData.size() < 1000000;
+      allow update: if false;
+      allow delete: if true;
+    }
+
     // ── Alles andere: gesperrt ──────────────────────────────
     match /{document=**} {
       allow read, write: if false;

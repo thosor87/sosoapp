@@ -4,6 +4,15 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
 
+### Rätsel-Rallye: Foto-Station, Team-Links & QR-Verwaltung 📸🗺️
+
+- **Team-spezifische Maps-Links:** Route `/quiz2` (Team 2) neben `/quiz` (Team 1). Fragen, Lösungswort und Text sind identisch; nach dem Lösungswort erscheint je Team ein eigener Google-Maps-Link zur nächsten Station
+- **Foto-Station `/foto`:** Foto-Upload mit clientseitiger Komprimierung (passt in Firestore), danach eigenes Lösungswort, konfigurierbarer Weiter-Button samt QR-Code und Hinweistext (what3words-Kontext)
+- **Foto-Galerie im Admin:** hochgeladene Fotos ansehen, herunterladen und löschen (Firestore-Collection `photos`)
+- **QR-Verwaltung im Admin:** feste App-QR-Codes (`/quiz`, `/quiz2`, `/foto`) zum direkten Ausdrucken plus beliebig viele konfigurierbare QR-Codes (Maps-Links, Sprachnachrichten) mit Live-Vorschau und Download
+- **Ablauf-Übersicht im Admin:** Live-Visualisierung beider Team-Wege mit Stationen, Lösungswort-Reihenfolge und den zugehörigen QR-Codes an jeder Station
+- Firestore-Rules: strukturelle Validierung der `photos`-Collection
+
 ### Ja?Wort – Hochzeitsquiz 💍
 
 - Neues, eigenständiges Hochzeitsquiz „Ja?Wort" unter der Route `/quiz` – von der Sommerfest-App unabhängig und ohne Magic-Link-Zugang, damit Gäste es direkt per QR-Code aufrufen können

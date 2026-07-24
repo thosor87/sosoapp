@@ -24,6 +24,9 @@ const QuizPage = lazy(() =>
 const QuizAdminPage = lazy(() =>
   import('@/pages/QuizAdminPage').then((m) => ({ default: m.QuizAdminPage }))
 )
+const FotoPage = lazy(() =>
+  import('@/pages/FotoPage').then((m) => ({ default: m.FotoPage }))
+)
 
 /** Die bestehende Sommerfest-App hinter dem Magic-Link-Gate. */
 function PartyApp() {
@@ -63,11 +66,29 @@ export function App() {
       <BrowserRouter>
         <Routes>
           {/* Hochzeitsquiz – öffentlich, per QR-Code erreichbar */}
+          {/* /quiz = Team 1, /quiz2 = Team 2 (nur der Maps-Link unterscheidet sich) */}
           <Route
             path="/quiz"
             element={
               <Suspense fallback={<LoadingScreen />}>
-                <QuizPage />
+                <QuizPage team={1} />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/quiz2"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <QuizPage team={2} />
+              </Suspense>
+            }
+          />
+          {/* Foto-Upload-Station */}
+          <Route
+            path="/foto"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <FotoPage />
               </Suspense>
             }
           />

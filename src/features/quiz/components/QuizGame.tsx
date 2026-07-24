@@ -5,7 +5,14 @@ import type { QuizQuestion } from '../types'
 
 type Phase = 'intro' | 'playing' | 'done'
 
-export function QuizGame() {
+/** Normalisiert einen Link – ergänzt bei Bedarf das Schema. */
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
+export function QuizGame({ team = 1 }: { team?: 1 | 2 }) {
   const config = useQuizStore((s) => s.config)
   const isLoading = useQuizStore((s) => s.isLoading)
   const subscribe = useQuizStore((s) => s.subscribe)
@@ -230,13 +237,39 @@ export function QuizGame() {
             >
               {config.solutionWord}
             </motion.p>
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="mt-10 inline-flex h-11 items-center justify-center rounded-xl border-2 border-primary-300 px-6 text-sm font-semibold text-primary-700 transition-all hover:bg-primary-50 cursor-pointer"
-            >
-              Nochmal spielen
-            </button>
+
+            {(() => {
+              const rawLink = team === 2 ? config.mapsLinkTeam2 : config.mapsLinkTeam1
+              const link = normalizeUrl(rawLink ?? '')
+              if (!link) return null
+              return (
+                <motion.a
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-10 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-secondary-500 px-8 text-base font-semibold text-white shadow-md transition-all hover:bg-secondary-600 active:bg-secondary-700"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {config.mapsLinkLabel || 'Weiter zur nächsten Station'}
+                </motion.a>
+              )
+            })()}
+
+            <div>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="mt-6 inline-flex h-11 items-center justify-center rounded-xl border-2 border-primary-300 px-6 text-sm font-semibold text-primary-700 transition-all hover:bg-primary-50 cursor-pointer"
+              >
+                Nochmal spielen
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
