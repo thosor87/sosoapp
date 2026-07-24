@@ -183,8 +183,7 @@ export function FotoUpload() {
             className="text-center py-4"
           >
             <div className="text-6xl mb-4">🎉</div>
-            <p className="text-warm-600">{config.fotoMessage}</p>
-            <p className="mt-6 text-sm uppercase tracking-widest text-warm-400">
+            <p className="text-sm uppercase tracking-widest text-warm-400">
               Euer Lösungswort
             </p>
             <motion.p
@@ -195,6 +194,12 @@ export function FotoUpload() {
             >
               {config.fotoSolutionWord}
             </motion.p>
+
+            {config.fotoMessage && (
+              <p className="mx-auto mt-6 max-w-md whitespace-pre-line text-warm-600 leading-relaxed">
+                {config.fotoMessage}
+              </p>
+            )}
 
             {nextUrlAbs && (
               <div className="mt-10 flex flex-col items-center gap-4">
