@@ -63,11 +63,20 @@ export function App() {
       <BrowserRouter>
         <Routes>
           {/* Hochzeitsquiz – öffentlich, per QR-Code erreichbar */}
+          {/* /quiz = Team 1, /quiz2 = Team 2 (nur der Maps-Link unterscheidet sich) */}
           <Route
             path="/quiz"
             element={
               <Suspense fallback={<LoadingScreen />}>
-                <QuizPage />
+                <QuizPage team={1} />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/quiz2"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <QuizPage team={2} />
               </Suspense>
             }
           />

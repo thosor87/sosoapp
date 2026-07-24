@@ -16,6 +16,7 @@ import {
   DEFAULT_INTRO,
   DEFAULT_SOLUTION_WORD,
   DEFAULT_SOLUTION_MESSAGE,
+  DEFAULT_MAPS_LABEL,
   DEFAULT_QUESTIONS,
 } from './defaults'
 
@@ -53,6 +54,9 @@ async function seedDefault() {
         intro: DEFAULT_INTRO,
         solutionWord: DEFAULT_SOLUTION_WORD,
         solutionMessage: DEFAULT_SOLUTION_MESSAGE,
+        mapsLinkLabel: DEFAULT_MAPS_LABEL,
+        mapsLinkTeam1: '',
+        mapsLinkTeam2: '',
         adminPasswordHash,
         questions: DEFAULT_QUESTIONS,
         updatedAt: serverTimestamp(),

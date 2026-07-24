@@ -18,6 +18,8 @@ export const DEFAULT_SOLUTION_WORD = 'LIEBE'
 export const DEFAULT_SOLUTION_MESSAGE =
   'Herzlichen Glückwunsch – ihr habt es geschafft! 💍'
 
+export const DEFAULT_MAPS_LABEL = 'Weiter zur nächsten Station 📍'
+
 /**
  * Beispiel-Fragen als Platzhalter. Können vollständig über die
  * Admin-Oberfläche geändert werden.

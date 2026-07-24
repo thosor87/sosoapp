@@ -120,6 +120,9 @@ interface EditorProps {
     intro: string
     solutionWord: string
     solutionMessage: string
+    mapsLinkLabel: string
+    mapsLinkTeam1: string
+    mapsLinkTeam2: string
     questions: QuizQuestion[]
   }) => Promise<void>
   onChangePassword: (pw: string) => Promise<void>
@@ -132,20 +135,26 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const [intro, setIntro] = useState(initial.intro)
   const [solutionWord, setSolutionWord] = useState(initial.solutionWord)
   const [solutionMessage, setSolutionMessage] = useState(initial.solutionMessage ?? '')
+  const [mapsLinkLabel, setMapsLinkLabel] = useState(
+    initial.mapsLinkLabel ?? 'Weiter zur nächsten Station 📍'
+  )
+  const [mapsLinkTeam1, setMapsLinkTeam1] = useState(initial.mapsLinkTeam1 ?? '')
+  const [mapsLinkTeam2, setMapsLinkTeam2] = useState(initial.mapsLinkTeam2 ?? '')
   const [questions, setQuestions] = useState<QuizQuestion[]>(
     initial.questions.map((q) => ({ ...q, options: [...q.options] }))
   )
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
-  const [qrDataUrl, setQrDataUrl] = useState('')
+  const [qrTeam1, setQrTeam1] = useState('')
+  const [qrTeam2, setQrTeam2] = useState('')
 
-  const participantUrl = `${window.location.origin}/quiz`
+  const urlTeam1 = `${window.location.origin}/quiz`
+  const urlTeam2 = `${window.location.origin}/quiz2`
 
   useEffect(() => {
-    QRCode.toDataURL(participantUrl, { width: 320, margin: 1 })
-      .then(setQrDataUrl)
-      .catch(() => setQrDataUrl(''))
-  }, [participantUrl])
+    QRCode.toDataURL(urlTeam1, { width: 320, margin: 1 }).then(setQrTeam1).catch(() => setQrTeam1(''))
+    QRCode.toDataURL(urlTeam2, { width: 320, margin: 1 }).then(setQrTeam2).catch(() => setQrTeam2(''))
+  }, [urlTeam1, urlTeam2])
 
   const updateQuestion = (id: string, patch: Partial<QuizQuestion>) => {
     setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)))
@@ -231,6 +240,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         intro,
         solutionWord: solutionWord.trim(),
         solutionMessage,
+        mapsLinkLabel: mapsLinkLabel.trim(),
+        mapsLinkTeam1: mapsLinkTeam1.trim(),
+        mapsLinkTeam2: mapsLinkTeam2.trim(),
         questions,
       })
       if (newPassword) {
@@ -245,9 +257,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
     }
   }
 
-  const copyLink = () => {
+  const copyLink = (url: string) => {
     navigator.clipboard
-      .writeText(participantUrl)
+      .writeText(url)
       .then(() => notify('Link kopiert!', 'success'))
       .catch(() => notify('Kopieren fehlgeschlagen', 'error'))
   }
@@ -261,42 +273,18 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         </Button>
       </div>
 
-      {/* QR-Code & Link zum Teilen */}
+      {/* QR-Codes & Links zum Teilen – ein QR pro Team */}
       <Card>
         <CardContent className="pt-6">
-          <h2 className="font-semibold text-warm-800 mb-1">QR-Code für Gäste</h2>
+          <h2 className="font-semibold text-warm-800 mb-1">QR-Codes für die Gäste</h2>
           <p className="text-sm text-warm-500 mb-4">
-            Diesen QR-Code ausdrucken oder anzeigen – die Gäste scannen ihn, um zum
-            Quiz zu gelangen.
+            Je Team einen QR-Code ausdrucken oder anzeigen. Fragen und Lösungswort
+            sind identisch – nach dem Lösungswort sieht jedes Team seinen eigenen
+            Google-Maps-Link zur nächsten Station.
           </p>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            {qrDataUrl && (
-              <img
-                src={qrDataUrl}
-                alt="QR-Code zum Quiz"
-                className="h-40 w-40 rounded-xl border border-warm-100"
-              />
-            )}
-            <div className="flex-1 w-full">
-              <label className="block text-sm font-medium text-warm-700 mb-1.5">
-                Link zum Quiz
-              </label>
-              <div className="flex gap-2">
-                <Input readOnly value={participantUrl} className="flex-1" />
-                <Button variant="outline" onClick={copyLink}>
-                  Kopieren
-                </Button>
-              </div>
-              {qrDataUrl && (
-                <a
-                  href={qrDataUrl}
-                  download="quiz-qr-code.png"
-                  className="mt-3 inline-block text-sm text-primary-600 underline hover:text-primary-700"
-                >
-                  QR-Code herunterladen
-                </a>
-              )}
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <QrBlock team={1} qr={qrTeam1} url={urlTeam1} onCopy={copyLink} />
+            <QrBlock team={2} qr={qrTeam2} url={urlTeam2} onCopy={copyLink} />
           </div>
         </CardContent>
       </Card>
@@ -322,6 +310,36 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
             value={solutionMessage}
             onChange={(e) => setSolutionMessage(e.target.value)}
             rows={2}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Nächste Station – Google-Maps-Links je Team */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h2 className="font-semibold text-warm-800">Nächste Station (Google Maps)</h2>
+          <p className="text-sm text-warm-500">
+            Nach dem Lösungswort erscheint ein Button mit dem Link zur nächsten
+            Station. Der Button-Text ist für beide Teams gleich – der Link
+            unterscheidet sich je Team. Leer lassen, um keinen Button anzuzeigen.
+          </p>
+          <Input
+            label="Button-Text (für beide Teams)"
+            value={mapsLinkLabel}
+            onChange={(e) => setMapsLinkLabel(e.target.value)}
+            placeholder="Weiter zur nächsten Station 📍"
+          />
+          <Input
+            label="Google-Maps-Link – Team 1 (/quiz)"
+            value={mapsLinkTeam1}
+            onChange={(e) => setMapsLinkTeam1(e.target.value)}
+            placeholder="https://maps.app.goo.gl/…"
+          />
+          <Input
+            label="Google-Maps-Link – Team 2 (/quiz2)"
+            value={mapsLinkTeam2}
+            onChange={(e) => setMapsLinkTeam2(e.target.value)}
+            placeholder="https://maps.app.goo.gl/…"
           />
         </CardContent>
       </Card>
@@ -455,6 +473,48 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
           {saving ? 'Speichere…' : 'Änderungen speichern'}
         </Button>
       </div>
+    </div>
+  )
+}
+
+/* ── QR-Block je Team ──────────────────────────────────── */
+
+function QrBlock({
+  team,
+  qr,
+  url,
+  onCopy,
+}: {
+  team: 1 | 2
+  qr: string
+  url: string
+  onCopy: (url: string) => void
+}) {
+  return (
+    <div className="rounded-xl border border-warm-100 p-4 text-center">
+      <p className="mb-2 text-sm font-semibold text-primary-600">Team {team}</p>
+      {qr && (
+        <img
+          src={qr}
+          alt={`QR-Code Team ${team}`}
+          className="mx-auto h-36 w-36 rounded-lg border border-warm-100"
+        />
+      )}
+      <div className="mt-3 flex gap-2">
+        <Input readOnly value={url} className="flex-1 text-xs" />
+        <Button variant="outline" size="sm" onClick={() => onCopy(url)}>
+          Kopieren
+        </Button>
+      </div>
+      {qr && (
+        <a
+          href={qr}
+          download={`quiz-qr-team${team}.png`}
+          className="mt-2 inline-block text-sm text-primary-600 underline hover:text-primary-700"
+        >
+          QR herunterladen
+        </a>
+      )}
     </div>
   )
 }

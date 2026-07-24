@@ -22,6 +22,12 @@ export interface QuizConfig {
   solutionWord: string
   /** Optionale Nachricht, die zusammen mit dem Lösungswort angezeigt wird. */
   solutionMessage: string
+  /** Button-Text für den Link zur nächsten Station (für beide Teams gleich). */
+  mapsLinkLabel: string
+  /** Google-Maps-Link zur nächsten Station – Team 1 (Route /quiz). */
+  mapsLinkTeam1: string
+  /** Google-Maps-Link zur nächsten Station – Team 2 (Route /quiz2). */
+  mapsLinkTeam2: string
   /** SHA-256-Hash (hex) des Admin-Passworts. */
   adminPasswordHash: string
   /** Die Fragen (Standard: 6). */
