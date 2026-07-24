@@ -129,6 +129,17 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // ── Sprachnachrichten (See-Stationen) ───────────────────
+    // Lesen: alle (Gäste hören die Nachricht) | Schreiben: Data-URL,
+    // Größe begrenzt, damit das Dokument < 1 MB bleibt
+    match /audio/{audioId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.data is string
+                            && request.resource.data.data.size() > 0
+                            && request.resource.data.data.size() < 1000000;
+      allow delete: if true;
+    }
+
     // ── Alles andere: gesperrt ──────────────────────────────
     match /{document=**} {
       allow read, write: if false;
