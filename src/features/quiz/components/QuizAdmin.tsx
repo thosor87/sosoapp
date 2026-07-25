@@ -9,6 +9,7 @@ import { useQuizStore } from '../store'
 import { usePhotoStore } from '../photoStore'
 import { useAudioStore, MAX_AUDIO_BYTES, type AudioStation } from '../audioStore'
 import { FlowOverview } from './FlowOverview'
+import { generateQrSheetPdf, type QrPdfEntry } from '../qrPdf'
 import type { QuizQuestion, QrCode } from '../types'
 
 const MAX_OPTIONS = 6
@@ -193,6 +194,7 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [tab, setTab] = useState<TabKey>('overview')
+  const [pdfBusy, setPdfBusy] = useState(false)
   const urlTeam1 = `${window.location.origin}/quiz`
   const urlTeam2 = `${window.location.origin}/quiz2`
   const urlFoto = `${window.location.origin}/foto`
@@ -323,6 +325,41 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
       .catch(() => notify('Kopieren fehlgeschlagen', 'error'))
   }
 
+  const downloadPdf = async () => {
+    const T1: [number, number, number] = [234, 88, 12]
+    const T2: [number, number, number] = [15, 118, 110]
+    const N: [number, number, number] = [87, 83, 78]
+    const cfg = (id: string) => qrCodes.find((q) => q.id === id)?.url?.trim() ?? ''
+    const lk2 = cfg('lk2')
+    const buch = cfg('buch')
+    const missing = [!lk2 && 'Lichterkette Team 2', !buch && 'Buch → Rutsche'].filter(Boolean)
+
+    const entries: QrPdfEntry[] = [
+      { label: 'Lichterkette – Team 1', sub: 'führt zum Quiz', url: urlTeam1, accent: T1, small: true },
+      ...(lk2 ? [{ label: 'Lichterkette – Team 2', sub: 'führt zu See 2 (Karte)', url: toAbsolute(lk2), accent: T2, small: true }] : []),
+      { label: 'See 1 · Sprachnachricht', sub: 'Team 1: zur Brücke', url: urlSee1, accent: T1 },
+      { label: 'See 2 · Sprachnachricht', sub: 'Team 2: zur Rutsche', url: urlSee2, accent: T2 },
+      { label: 'Rutsche · Foto', sub: 'Foto-Upload', url: urlFoto, accent: N },
+      { label: 'Buch – Rätsel', sub: 'aufs Buch kleben', url: urlBuch, accent: N },
+      ...(buch ? [{ label: 'Buch → Rutsche', sub: 'führt zur Rutsche (Karte)', url: toAbsolute(buch), accent: N }] : []),
+      { label: 'Quiz – Team 2', sub: 'nach dem Foto (in der App)', url: urlTeam2, accent: T2 },
+    ]
+
+    setPdfBusy(true)
+    try {
+      await generateQrSheetPdf(entries)
+      if (missing.length) {
+        notify(`PDF erstellt – ohne: ${missing.join(', ')} (Ziel fehlt)`, 'info')
+      } else {
+        notify('PDF wird heruntergeladen', 'success')
+      }
+    } catch {
+      notify('PDF-Erstellung fehlgeschlagen', 'error')
+    } finally {
+      setPdfBusy(false)
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 space-y-8">
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between">
@@ -366,12 +403,18 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         <div className="mx-auto max-w-3xl">
           <Card>
             <CardContent className="pt-6">
-              <h2 className="font-semibold text-warm-800 mb-1">
-                Alle QR-Codes zum Ausdrucken
-              </h2>
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="font-semibold text-warm-800">
+                  Alle QR-Codes zum Ausdrucken
+                </h2>
+                <Button size="sm" onClick={downloadPdf} disabled={pdfBusy}>
+                  {pdfBusy ? 'Erstelle PDF…' : '⬇ Alle als PDF (A4)'}
+                </Button>
+              </div>
               <p className="text-sm text-warm-500 mb-4">
                 Feste App-QR-Codes und die im Tab „Übersicht" eingetragenen Ziele.
                 Ziele ändern? Einfach in die <strong>Übersicht</strong> wechseln.
+                Mit „Alle als PDF" ladet ihr alle Codes auf einem A4-Blatt herunter.
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <QrPrintTile label="Quiz – Team 1" url={urlTeam1} onCopy={copyLink} />
