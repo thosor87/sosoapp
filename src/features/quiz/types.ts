@@ -65,6 +65,14 @@ export interface QuizConfig {
   /** Text unter dem Player – See 2 (Team 2). */
   see2Text: string
 
+  /* ── Buch-Rätsel-Station (/buch) ──────────────────────── */
+  /** Überschrift der Buch-Rätsel-Seite. */
+  buchTitle: string
+  /** Rätseltext (führt zum 3-stelligen Code fürs Buch-Schloss). */
+  buchRiddle: string
+  /** Hinweis unter dem Rätsel. */
+  buchHint: string
+
   /** Frei konfigurierbare QR-Codes für die Rätsel-Rallye (zum Ausdrucken). */
   qrCodes: QrCode[]
 

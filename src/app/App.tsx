@@ -30,6 +30,9 @@ const FotoPage = lazy(() =>
 const VoicePage = lazy(() =>
   import('@/pages/VoicePage').then((m) => ({ default: m.VoicePage }))
 )
+const BuchPage = lazy(() =>
+  import('@/pages/BuchPage').then((m) => ({ default: m.BuchPage }))
+)
 
 /** Die bestehende Sommerfest-App hinter dem Magic-Link-Gate. */
 function PartyApp() {
@@ -109,6 +112,15 @@ export function App() {
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <VoicePage station="see2" />
+              </Suspense>
+            }
+          />
+          {/* Buch-Rätsel-Station */}
+          <Route
+            path="/buch"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <BuchPage />
               </Suspense>
             }
           />

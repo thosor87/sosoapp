@@ -9,18 +9,20 @@ import { useQuizStore } from '../store'
 import { usePhotoStore } from '../photoStore'
 import { useAudioStore, MAX_AUDIO_BYTES, type AudioStation } from '../audioStore'
 import { FlowOverview } from './FlowOverview'
+import { generateQrSheetPdf, type QrPdfEntry } from '../qrPdf'
 import type { QuizQuestion, QrCode } from '../types'
 
 const MAX_OPTIONS = 6
 const MIN_OPTIONS = 2
 
-type TabKey = 'overview' | 'quiz' | 'foto' | 'audio' | 'qr' | 'settings'
+type TabKey = 'overview' | 'quiz' | 'foto' | 'audio' | 'buch' | 'qr' | 'settings'
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'overview', label: 'Übersicht', icon: '🗺️' },
   { key: 'quiz', label: 'Quiz', icon: '🧩' },
   { key: 'foto', label: 'Foto', icon: '📸' },
   { key: 'audio', label: 'Sprache', icon: '🔊' },
+  { key: 'buch', label: 'Buch', icon: '📖' },
   { key: 'qr', label: 'QR-Codes', icon: '▣' },
   { key: 'settings', label: 'Einstellungen', icon: '⚙️' },
 ]
@@ -148,6 +150,9 @@ interface EditorProps {
     see1Text: string
     see2Title: string
     see2Text: string
+    buchTitle: string
+    buchRiddle: string
+    buchHint: string
     qrCodes: QrCode[]
     questions: QuizQuestion[]
   }) => Promise<void>
@@ -177,6 +182,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const [see1Text, setSee1Text] = useState(initial.see1Text ?? '')
   const [see2Title, setSee2Title] = useState(initial.see2Title ?? 'Sprachnachricht 🔊')
   const [see2Text, setSee2Text] = useState(initial.see2Text ?? '')
+  const [buchTitle, setBuchTitle] = useState(initial.buchTitle ?? 'Das Rätsel 📖🔒')
+  const [buchRiddle, setBuchRiddle] = useState(initial.buchRiddle ?? '')
+  const [buchHint, setBuchHint] = useState(initial.buchHint ?? '')
   const [qrCodes, setQrCodes] = useState<QrCode[]>(
     (initial.qrCodes ?? []).map((q) => ({ ...q }))
   )
@@ -186,11 +194,13 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [tab, setTab] = useState<TabKey>('overview')
+  const [pdfBusy, setPdfBusy] = useState(false)
   const urlTeam1 = `${window.location.origin}/quiz`
   const urlTeam2 = `${window.location.origin}/quiz2`
   const urlFoto = `${window.location.origin}/foto`
   const urlSee1 = `${window.location.origin}/see1`
   const urlSee2 = `${window.location.origin}/see2`
+  const urlBuch = `${window.location.origin}/buch`
 
   const updateQuestion = (id: string, patch: Partial<QuizQuestion>) => {
     setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)))
@@ -290,6 +300,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         see1Text,
         see2Title: see2Title.trim(),
         see2Text,
+        buchTitle: buchTitle.trim(),
+        buchRiddle,
+        buchHint,
         qrCodes: qrCodes.map((q) => ({ ...q, label: q.label.trim(), url: q.url.trim() })),
         questions,
       })
@@ -310,6 +323,41 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
       .writeText(url)
       .then(() => notify('Link kopiert!', 'success'))
       .catch(() => notify('Kopieren fehlgeschlagen', 'error'))
+  }
+
+  const downloadPdf = async () => {
+    const T1: [number, number, number] = [234, 88, 12]
+    const T2: [number, number, number] = [15, 118, 110]
+    const N: [number, number, number] = [87, 83, 78]
+    const cfg = (id: string) => qrCodes.find((q) => q.id === id)?.url?.trim() ?? ''
+    const lk2 = cfg('lk2')
+    const buch = cfg('buch')
+    const missing = [!lk2 && 'Lichterkette Team 2', !buch && 'Buch → Rutsche'].filter(Boolean)
+
+    const entries: QrPdfEntry[] = [
+      { label: 'Lichterkette – Team 1', sub: 'führt zum Quiz', url: urlTeam1, accent: T1, small: true },
+      ...(lk2 ? [{ label: 'Lichterkette – Team 2', sub: 'führt zu See 2 (Karte)', url: toAbsolute(lk2), accent: T2, small: true }] : []),
+      { label: 'See 1 · Sprachnachricht', sub: 'Team 1: zur Brücke', url: urlSee1, accent: T1 },
+      { label: 'See 2 · Sprachnachricht', sub: 'Team 2: zur Rutsche', url: urlSee2, accent: T2 },
+      { label: 'Rutsche · Foto', sub: 'Foto-Upload', url: urlFoto, accent: N },
+      { label: 'Buch – Rätsel', sub: 'aufs Buch kleben', url: urlBuch, accent: N },
+      ...(buch ? [{ label: 'Buch → Rutsche', sub: 'führt zur Rutsche (Karte)', url: toAbsolute(buch), accent: N }] : []),
+      { label: 'Quiz – Team 2', sub: 'nach dem Foto (in der App)', url: urlTeam2, accent: T2 },
+    ]
+
+    setPdfBusy(true)
+    try {
+      await generateQrSheetPdf(entries)
+      if (missing.length) {
+        notify(`PDF erstellt – ohne: ${missing.join(', ')} (Ziel fehlt)`, 'info')
+      } else {
+        notify('PDF wird heruntergeladen', 'success')
+      }
+    } catch {
+      notify('PDF-Erstellung fehlgeschlagen', 'error')
+    } finally {
+      setPdfBusy(false)
+    }
   }
 
   return (
@@ -355,12 +403,18 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         <div className="mx-auto max-w-3xl">
           <Card>
             <CardContent className="pt-6">
-              <h2 className="font-semibold text-warm-800 mb-1">
-                Alle QR-Codes zum Ausdrucken
-              </h2>
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="font-semibold text-warm-800">
+                  Alle QR-Codes zum Ausdrucken
+                </h2>
+                <Button size="sm" onClick={downloadPdf} disabled={pdfBusy}>
+                  {pdfBusy ? 'Erstelle PDF…' : '⬇ Alle als PDF (A4)'}
+                </Button>
+              </div>
               <p className="text-sm text-warm-500 mb-4">
                 Feste App-QR-Codes und die im Tab „Übersicht" eingetragenen Ziele.
                 Ziele ändern? Einfach in die <strong>Übersicht</strong> wechseln.
+                Mit „Alle als PDF" ladet ihr alle Codes auf einem A4-Blatt herunter.
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <QrPrintTile label="Quiz – Team 1" url={urlTeam1} onCopy={copyLink} />
@@ -368,6 +422,7 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
                 <QrPrintTile label="Foto-Station" url={urlFoto} onCopy={copyLink} />
                 <QrPrintTile label="See 1 – Sprachnachricht" url={urlSee1} onCopy={copyLink} />
                 <QrPrintTile label="See 2 – Sprachnachricht" url={urlSee2} onCopy={copyLink} />
+                <QrPrintTile label="Buch – Rätsel (aufs Buch kleben)" url={urlBuch} onCopy={copyLink} />
                 {qrCodes
                   .filter((q) => q.url.trim())
                   .map((q) => (
@@ -535,6 +590,39 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
             setText={setSee2Text}
             notify={notify}
           />
+        </div>
+      )}
+
+      {/* ── Buch-Rätsel ───────────────────────────────────── */}
+      {tab === 'buch' && (
+        <div className="mx-auto max-w-2xl space-y-8">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <h2 className="font-semibold text-warm-800">Buch-Rätsel (/buch)</h2>
+              <p className="text-sm text-warm-500">
+                Der QR-Code (Tab „QR-Codes") wird auf das Buch geklebt. Nach dem
+                Scannen erscheint dieses Rätsel; die Lösung ist der 3-stellige Code
+                für das Zahlenschloss am Buch.
+              </p>
+              <Input
+                label="Titel"
+                value={buchTitle}
+                onChange={(e) => setBuchTitle(e.target.value)}
+              />
+              <Textarea
+                label="Rätseltext"
+                value={buchRiddle}
+                onChange={(e) => setBuchRiddle(e.target.value)}
+                rows={6}
+              />
+              <Textarea
+                label="Hinweis (unter dem Rätsel)"
+                value={buchHint}
+                onChange={(e) => setBuchHint(e.target.value)}
+                rows={2}
+              />
+            </CardContent>
+          </Card>
         </div>
       )}
 

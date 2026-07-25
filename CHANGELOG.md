@@ -4,6 +4,21 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
 
+### QR-Codes als PDF herunterladen 🖨️
+
+- Neuer Button „Alle als PDF (A4)" im Admin-Tab „QR-Codes": erzeugt clientseitig ein druckbares A4-Blatt mit allen QR-Codes auf einer Seite (jsPDF, dynamisch geladen)
+- Die zwei Lichterkette-Codes werden kleiner dargestellt, Team-Farben und Stationsbeschriftung; Maps-Ziele ohne URL werden übersprungen (mit Hinweis)
+
+### Buch-Rätsel-Station 📖🔒
+
+- Neue App-Station `/buch`: zeigt ein konfigurierbares Rätsel an, dessen Lösung der 3-stellige Code für das Zahlenschloss am Buch ist
+- Der QR-Code wird auf das Buch geklebt; Admin-Tab „Buch" für Titel, Rätseltext und Hinweis
+- In QR-Druck-Übersicht und Ablauf-Übersicht integriert (QR direkt an der Station „Brücke · Buch")
+
+### Foto: Nachrichtentext unter das Lösungswort
+
+- Auf `/foto` erscheint der Nachrichtentext jetzt unter dem großen Lösungswort statt darüber
+
 ### Sprachnachricht-Stationen 🔊
 
 - Zwei neue App-Stationen `/see1` und `/see2`: spielen eine hinterlegte Sprachnachricht ab (Audio in der App, kein externer Link)
