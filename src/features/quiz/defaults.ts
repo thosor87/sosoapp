@@ -31,6 +31,14 @@ export const DEFAULT_FOTO_NEXT_URL = '/quiz2'
 export const DEFAULT_FOTO_NOTE =
   'Das Quiz müsst ihr natürlich nur ausfüllen, wenn ihr schon drei Wörter beisammen habt. 😉'
 
+/* ── Buch-Rätsel-Station (/buch) ──────────────────────────── */
+export const DEFAULT_BUCH_TITLE = 'Das Rätsel 📖🔒'
+export const DEFAULT_BUCH_RIDDLE =
+  'Löst dieses Rätsel, um den 3-stelligen Code zu erhalten:\n\n' +
+  '(Hier euer Rätsel eintragen – z. B. „Nehmt das Jahr, in dem wir uns kennengelernt haben, ...")'
+export const DEFAULT_BUCH_HINT =
+  'Gebt den gefundenen 3-stelligen Code in das Zahlenschloss am Buch ein.'
+
 /* ── Sprachnachricht-Stationen (/see1, /see2) ─────────────── */
 export const DEFAULT_SEE1_TITLE = 'Sprachnachricht 🔊'
 export const DEFAULT_SEE1_TEXT =
@@ -116,6 +124,9 @@ export const DEFAULT_CONFIG_FIELDS = {
   see1Text: DEFAULT_SEE1_TEXT,
   see2Title: DEFAULT_SEE2_TITLE,
   see2Text: DEFAULT_SEE2_TEXT,
+  buchTitle: DEFAULT_BUCH_TITLE,
+  buchRiddle: DEFAULT_BUCH_RIDDLE,
+  buchHint: DEFAULT_BUCH_HINT,
   qrCodes: DEFAULT_QR_CODES,
   questions: DEFAULT_QUESTIONS,
 } as const

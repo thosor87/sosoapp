@@ -14,13 +14,14 @@ import type { QuizQuestion, QrCode } from '../types'
 const MAX_OPTIONS = 6
 const MIN_OPTIONS = 2
 
-type TabKey = 'overview' | 'quiz' | 'foto' | 'audio' | 'qr' | 'settings'
+type TabKey = 'overview' | 'quiz' | 'foto' | 'audio' | 'buch' | 'qr' | 'settings'
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'overview', label: 'Übersicht', icon: '🗺️' },
   { key: 'quiz', label: 'Quiz', icon: '🧩' },
   { key: 'foto', label: 'Foto', icon: '📸' },
   { key: 'audio', label: 'Sprache', icon: '🔊' },
+  { key: 'buch', label: 'Buch', icon: '📖' },
   { key: 'qr', label: 'QR-Codes', icon: '▣' },
   { key: 'settings', label: 'Einstellungen', icon: '⚙️' },
 ]
@@ -148,6 +149,9 @@ interface EditorProps {
     see1Text: string
     see2Title: string
     see2Text: string
+    buchTitle: string
+    buchRiddle: string
+    buchHint: string
     qrCodes: QrCode[]
     questions: QuizQuestion[]
   }) => Promise<void>
@@ -177,6 +181,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const [see1Text, setSee1Text] = useState(initial.see1Text ?? '')
   const [see2Title, setSee2Title] = useState(initial.see2Title ?? 'Sprachnachricht 🔊')
   const [see2Text, setSee2Text] = useState(initial.see2Text ?? '')
+  const [buchTitle, setBuchTitle] = useState(initial.buchTitle ?? 'Das Rätsel 📖🔒')
+  const [buchRiddle, setBuchRiddle] = useState(initial.buchRiddle ?? '')
+  const [buchHint, setBuchHint] = useState(initial.buchHint ?? '')
   const [qrCodes, setQrCodes] = useState<QrCode[]>(
     (initial.qrCodes ?? []).map((q) => ({ ...q }))
   )
@@ -191,6 +198,7 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
   const urlFoto = `${window.location.origin}/foto`
   const urlSee1 = `${window.location.origin}/see1`
   const urlSee2 = `${window.location.origin}/see2`
+  const urlBuch = `${window.location.origin}/buch`
 
   const updateQuestion = (id: string, patch: Partial<QuizQuestion>) => {
     setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)))
@@ -290,6 +298,9 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
         see1Text,
         see2Title: see2Title.trim(),
         see2Text,
+        buchTitle: buchTitle.trim(),
+        buchRiddle,
+        buchHint,
         qrCodes: qrCodes.map((q) => ({ ...q, label: q.label.trim(), url: q.url.trim() })),
         questions,
       })
@@ -368,6 +379,7 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
                 <QrPrintTile label="Foto-Station" url={urlFoto} onCopy={copyLink} />
                 <QrPrintTile label="See 1 – Sprachnachricht" url={urlSee1} onCopy={copyLink} />
                 <QrPrintTile label="See 2 – Sprachnachricht" url={urlSee2} onCopy={copyLink} />
+                <QrPrintTile label="Buch – Rätsel (aufs Buch kleben)" url={urlBuch} onCopy={copyLink} />
                 {qrCodes
                   .filter((q) => q.url.trim())
                   .map((q) => (
@@ -535,6 +547,39 @@ function Editor({ initial, onSave, onChangePassword, onLogout, notify }: EditorP
             setText={setSee2Text}
             notify={notify}
           />
+        </div>
+      )}
+
+      {/* ── Buch-Rätsel ───────────────────────────────────── */}
+      {tab === 'buch' && (
+        <div className="mx-auto max-w-2xl space-y-8">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <h2 className="font-semibold text-warm-800">Buch-Rätsel (/buch)</h2>
+              <p className="text-sm text-warm-500">
+                Der QR-Code (Tab „QR-Codes") wird auf das Buch geklebt. Nach dem
+                Scannen erscheint dieses Rätsel; die Lösung ist der 3-stellige Code
+                für das Zahlenschloss am Buch.
+              </p>
+              <Input
+                label="Titel"
+                value={buchTitle}
+                onChange={(e) => setBuchTitle(e.target.value)}
+              />
+              <Textarea
+                label="Rätseltext"
+                value={buchRiddle}
+                onChange={(e) => setBuchRiddle(e.target.value)}
+                rows={6}
+              />
+              <Textarea
+                label="Hinweis (unter dem Rätsel)"
+                value={buchHint}
+                onChange={(e) => setBuchHint(e.target.value)}
+                rows={2}
+              />
+            </CardContent>
+          </Card>
         </div>
       )}
 

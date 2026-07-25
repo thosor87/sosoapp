@@ -22,6 +22,8 @@ interface Station {
   title: string
   desc: string
   appPath?: '/quiz' | '/quiz2' | '/foto'
+  /** QR-Code, der AN dieser Station hängt (kein Verbindungs-QR), z. B. /buch. */
+  stationQr?: { path: '/buch'; label: string }
   word?: number
   wordLabel?: string
   goal?: boolean
@@ -43,7 +45,7 @@ const TEAM1: Station[] = [
   START,
   { via: { kind: 'appqr', path: '/quiz', label: 'QR an der Lichterkette' }, emoji: '🧩', title: 'Quiz', appPath: '/quiz', desc: '6 Fragen → Lösungswort + Maps-Link.', word: 1, wordLabel: 'Quiz' },
   { via: { kind: 'maps', team: 1, label: 'Maps-Link nach dem Quiz' }, emoji: '🌊', title: 'See 1', desc: 'Am Ufer hängt ein QR-Code mit einer Sprachnachricht.' },
-  { via: { kind: 'appqr', path: '/see1', label: 'QR am See 1 → Sprachnachricht' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'Die Sprachnachricht schickt euch zur Brücke. Unter der Brücke ein Buch: Text, Lösungswort und ein QR-Code als Bild.', word: 2, wordLabel: 'Buch' },
+  { via: { kind: 'appqr', path: '/see1', label: 'QR am See 1 → Sprachnachricht' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'Die Sprachnachricht schickt euch zur Brücke. QR auf dem Buch scannen → Rätsel → 3-stelliger Code fürs Schloss. Im Buch: Lösungswort + QR-Bild.', stationQr: { path: '/buch', label: 'QR auf dem Buch → Rätsel' }, word: 2, wordLabel: 'Buch' },
   { via: { kind: 'cfg', ref: 'buch', label: 'QR-Bild im Buch' }, emoji: '🛝', title: 'Rutsche', desc: 'An der Rutsche hängt der QR-Code der Foto-Station.' },
   { via: { kind: 'appqr', path: '/foto', label: 'QR an der Rutsche' }, emoji: '📸', title: 'Foto', appPath: '/foto', desc: 'Foto hochladen → Lösungswort.', word: 3, wordLabel: 'Foto' },
   { emoji: '🎯', title: 'what3words', desc: 'Reihenfolge: Quiz · Buch · Foto → Ziel finden.', goal: true },
@@ -55,7 +57,7 @@ const TEAM2: Station[] = [
   { via: { kind: 'appqr', path: '/see2', label: 'QR am See 2 → Sprachnachricht' }, emoji: '🛝', title: 'Rutsche', desc: 'Die Sprachnachricht schickt euch zur Rutsche. Dort hängt der QR-Code der Foto-Station.' },
   { via: { kind: 'appqr', path: '/foto', label: 'QR an der Rutsche' }, emoji: '📸', title: 'Foto', appPath: '/foto', desc: 'Foto hochladen → Lösungswort + Link zum Quiz.', word: 1, wordLabel: 'Foto' },
   { via: { kind: 'appqr', path: '/quiz2', label: 'Link/QR auf der Foto-Seite' }, emoji: '🧩', title: 'Quiz 2', appPath: '/quiz2', desc: '6 Fragen → Lösungswort + Maps-Link.', word: 2, wordLabel: 'Quiz' },
-  { via: { kind: 'maps', team: 2, label: 'Maps-Link nach dem Quiz' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'Das Buch unter der Brücke: Text und Lösungswort.', word: 3, wordLabel: 'Buch' },
+  { via: { kind: 'maps', team: 2, label: 'Maps-Link nach dem Quiz' }, emoji: '🌉', title: 'Brücke · Buch', desc: 'QR auf dem Buch scannen → Rätsel → 3-stelliger Code fürs Schloss. Im Buch: Lösungswort.', stationQr: { path: '/buch', label: 'QR auf dem Buch → Rätsel' }, word: 3, wordLabel: 'Buch' },
   { emoji: '🎯', title: 'what3words', desc: 'Reihenfolge: Foto · Quiz · Buch → Ziel finden.', goal: true },
 ]
 
@@ -87,6 +89,7 @@ export function FlowOverview(props: Props) {
   const targets = useMemo(() => {
     const map: Record<string, string> = {}
     for (const s of [...TEAM1, ...TEAM2]) {
+      if (s.stationQr) map[`app:${s.stationQr.path}`] = `${origin}${s.stationQr.path}`
       if (!s.via) continue
       if (s.via.kind === 'appqr') map[`app:${s.via.path}`] = `${origin}${s.via.path}`
       else if (s.via.kind === 'cfg') map[`cfg:${s.via.ref}`] = toAbsolute(cfgUrl(s.via.ref), origin)
@@ -284,6 +287,31 @@ function TeamLane({
                     )}
                   </div>
                   <p className="text-xs text-warm-500">{s.desc}</p>
+
+                  {s.stationQr && (
+                    <div className="mt-2 flex items-center gap-2 rounded-lg bg-warm-50 p-2">
+                      {qrMap[`app:${s.stationQr.path}`] && (
+                        <img
+                          src={qrMap[`app:${s.stationQr.path}`]}
+                          alt="QR-Code"
+                          className="h-14 w-14 flex-none rounded border border-warm-100 bg-white"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-medium text-warm-600">▣ {s.stationQr.label}</p>
+                        <div className="flex gap-2 text-xs">
+                          <a href={`${origin}${s.stationQr.path}`} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700">
+                            öffnen ↗
+                          </a>
+                          {qrMap[`app:${s.stationQr.path}`] && (
+                            <a href={qrMap[`app:${s.stationQr.path}`]} download={`qr-buch.png`} className="text-primary-600 hover:text-primary-700">
+                              Download
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </li>
