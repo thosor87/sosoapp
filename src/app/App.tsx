@@ -34,6 +34,11 @@ const BuchPage = lazy(() =>
   import('@/pages/BuchPage').then((m) => ({ default: m.BuchPage }))
 )
 
+// Die Maulwurf Company – digitale Nummernkarten (eigenständig, ohne Magic-Link)
+const MaulwurfPage = lazy(() =>
+  import('@/pages/MaulwurfPage').then((m) => ({ default: m.MaulwurfPage }))
+)
+
 /** Die bestehende Sommerfest-App hinter dem Magic-Link-Gate. */
 function PartyApp() {
   return (
@@ -121,6 +126,15 @@ export function App() {
             element={
               <Suspense fallback={<LoadingScreen />}>
                 <BuchPage />
+              </Suspense>
+            }
+          />
+          {/* Die Maulwurf Company – digitale Nummernkarten */}
+          <Route
+            path="/maulwurf"
+            element={
+              <Suspense fallback={<LoadingScreen />}>
+                <MaulwurfPage />
               </Suspense>
             }
           />

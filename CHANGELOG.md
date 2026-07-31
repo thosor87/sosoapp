@@ -4,6 +4,13 @@ Alle relevanten Änderungen an der SoSo-App werden in dieser Datei dokumentiert.
 
 ## [Unreleased]
 
+### Die Maulwurf Company – digitale Nummernkarten 🐭
+
+- Neue eigenständige Seite `/maulwurf`: Ersatz für die fehlenden Zahlenscheiben des Brettspiels „Die Maulwurf Company" (Ravensburger)
+- Jeder Spieler (2–4) besitzt einen Satz Scheiben mit den Werten `1, 2, 2, 3, 3, 4` in seiner Farbe (Rot/Blau/Grün/Gelb), verdeckt gemischt
+- Tippen deckt die nächste Scheibe auf; sind alle sechs aufgedeckt, wird der Satz automatisch neu gemischt – inkl. Anzeige verbleibender Scheiben und Hinweis auf die Maulwurf-Anzahl je Spielerzahl
+- Rein clientseitig (kein Firebase, kein Magic-Link nötig)
+
 ### QR-Codes als PDF herunterladen 🖨️
 
 - Neuer Button „Alle als PDF (A4)" im Admin-Tab „QR-Codes": erzeugt clientseitig ein druckbares A4-Blatt mit allen QR-Codes auf einer Seite (jsPDF, dynamisch geladen)
