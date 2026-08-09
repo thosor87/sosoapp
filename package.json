@@ -17,7 +17,7 @@
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "leaflet-rotate": "^0.2.8",
-    "motion": "^12.43.0",
+    "motion": "^13.0.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
