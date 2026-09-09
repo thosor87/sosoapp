@@ -21,6 +21,9 @@ updates:
       development:
         applies-to: version-updates
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
